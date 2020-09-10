@@ -28,10 +28,12 @@ func (a *banAction) perform(r *rule, e *entry) error {
 		s = ipset6Name
 	}
 	d := int64(a.duration.Seconds())
-	log.Printf("%s: adding '%s' to ipset '%s' with duration %s (%d)", r.name, e.host, s, a.duration, d)
-	if err := exec.Command("ipset", "add", s, e.host, "timeout", fmt.Sprint(d)).Run(); err != nil {
-		log.Printf("%s: failed to add '%s' to ipset '%s' with duration %s (%d): %s", r.name, e.host, s, a.duration, d, err)
-		return err
+	if err := exec.Command("ipset", "test", s, e.host).Run(); err != nil {
+		log.Printf("%s: adding '%s' to ipset '%s' with duration %s", r.name, e.host, s, a.duration)
+		if err := exec.Command("ipset", "add", s, e.host, "timeout", fmt.Sprint(d)).Run(); err != nil {
+			log.Printf("%s: failed to add '%s' to ipset '%s' with duration %s: %s", r.name, e.host, s, a.duration, err)
+			return err
+		}
 	}
 
 	return nil
