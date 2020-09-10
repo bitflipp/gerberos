@@ -22,14 +22,14 @@ func (s *fileSource) initialize(ps []string) error {
 	return nil
 }
 
-func (s *fileSource) entries() (chan entry, error) {
+func (s *fileSource) entries() (chan *entry, error) {
 	cmd := exec.Command("tail", "-n", "0", "-F", s.path)
 	o, err := cmd.StdoutPipe()
 	if err != nil {
 		return nil, err
 	}
 
-	c := make(chan entry, 1)
+	c := make(chan *entry, 1)
 	go func() {
 		s := bufio.NewScanner(o)
 		for s.Scan() {
@@ -49,14 +49,14 @@ func (s *systemdSource) initialize(ps []string) error {
 	return nil
 }
 
-func (s *systemdSource) entries() (chan entry, error) {
-	cmd := exec.Command("journalctl", "-f", "-n", "0", "-u", s.service)
+func (s *systemdSource) entries() (chan *entry, error) {
+	cmd := exec.Command("journalctl", "-n", "0", "-f", "-u", s.service)
 	o, err := cmd.StdoutPipe()
 	if err != nil {
 		return nil, err
 	}
 
-	c := make(chan entry, 1)
+	c := make(chan *entry, 1)
 	go func() {
 		s := bufio.NewScanner(o)
 		for s.Scan() {

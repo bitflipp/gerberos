@@ -2,7 +2,9 @@ package main
 
 import (
 	"errors"
+	"fmt"
 	"log"
+	"os/exec"
 	"time"
 )
 
@@ -20,8 +22,18 @@ func (a *banAction) initialize(ps []string) error {
 	return nil
 }
 
-func (a *banAction) perform(r *rule, m entry) error {
-	log.Printf("%s: (not) banning: %+v", r.name, m)
+func (a *banAction) perform(r *rule, e *entry) error {
+	s := ipset4Name
+	if e.ipv6 {
+		s = ipset6Name
+	}
+	d := int64(a.duration.Seconds())
+	log.Printf("%s: adding '%s' to ipset '%s' with duration %s (%d)", r.name, e.host, s, a.duration, d)
+	if err := exec.Command("ipset", "add", s, e.host, "timeout", fmt.Sprint(d)).Run(); err != nil {
+		log.Printf("%s: failed to add '%s' to ipset '%s' with duration %s (%d): %s", r.name, e.host, s, a.duration, d, err)
+		return err
+	}
+
 	return nil
 }
 
@@ -29,7 +41,7 @@ func (a *logAction) initialize(ps []string) error {
 	return nil
 }
 
-func (a *logAction) perform(r *rule, m entry) error {
-	log.Printf("%s: %+v", r.name, m)
+func (a *logAction) perform(r *rule, e *entry) error {
+	log.Printf("%s: %s", r.name, e)
 	return nil
 }

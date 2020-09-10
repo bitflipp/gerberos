@@ -75,6 +75,7 @@ func (r *rule) worker() {
 		log.Printf("%s: failed to initialize entries channel: %s", r.name, err)
 		return
 	}
+
 	for m := range c {
 		if m.err == nil {
 			if !r.regexp.MatchString(m.line) {

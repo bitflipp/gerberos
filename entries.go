@@ -2,6 +2,7 @@ package main
 
 import (
 	"errors"
+	"fmt"
 	"regexp"
 	"time"
 )
@@ -20,7 +21,7 @@ type entry struct {
 	err  error
 }
 
-func newEntry(l string, t time.Time) entry {
+func newEntry(l string, t time.Time) *entry {
 	var host string
 	ipv6 := false
 
@@ -28,20 +29,29 @@ func newEntry(l string, t time.Time) entry {
 	if m4 == nil {
 		m6 := hostRegexp6.FindAllString(l, 2)
 		if m6 == nil {
-			return entry{err: errors.New("no IPv4 or IPv6 host")}
+			return &entry{err: errors.New("no IPv4 or IPv6 host")}
 		} else {
 			if len(m6) > 1 {
-				return entry{err: errors.New("multiple IPv6 hosts")}
+				return &entry{err: errors.New("multiple IPv6 hosts")}
 			}
 			host = m6[0]
 			ipv6 = true
 		}
 	} else {
 		if len(m4) > 1 {
-			return entry{err: errors.New("multiple IPv4 hosts")}
+			return &entry{err: errors.New("multiple IPv4 hosts")}
 		}
 		host = m4[0]
 	}
 
-	return entry{line: l, time: t, host: host, ipv6: ipv6}
+	return &entry{line: l, time: t, host: host, ipv6: ipv6}
+}
+
+func (e entry) String() string {
+	ipv := "IPv4"
+	if e.ipv6 {
+		ipv = "IPv6"
+	}
+
+	return fmt.Sprintf("%s, %s, %s", e.time.Format(time.RFC3339), e.host, ipv)
 }

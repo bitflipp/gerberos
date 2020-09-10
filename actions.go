@@ -5,8 +5,8 @@ import (
 )
 
 type action interface {
-	initialize(ps []string) error
-	perform(r *rule, m entry) error
+	initialize([]string) error
+	perform(*rule, *entry) error
 }
 
 type banAction struct {

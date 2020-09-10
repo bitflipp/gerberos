@@ -1,6 +1,6 @@
 [rules]
     [rules.test-file]
-    source = ["file", "/home/bitflipp/Test"]
+    source = ["file", "/home/bitflipp/Bonf"]
     regexp = ".*"
     action = ["ban", "12h"]
 
