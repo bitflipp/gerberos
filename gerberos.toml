@@ -1,10 +1,5 @@
 [rules]
     [rules.test-file]
-    source = ["file", "/home/bitflipp/Bonf"]
+    source = ["file", "/"]
     regexp = ".*"
-    action = ["ban", "12h"]
-
-    [rules.test-systemd]
-    source = ["systemd", "NetworkManager"]
-    regexp = ".*"
-    action = ["log"]
+    action = ["ban", "1m"]
