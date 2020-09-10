@@ -20,7 +20,7 @@ func (a *banAction) initialize(ps []string) error {
 	return nil
 }
 
-func (a *banAction) perform(r *rule, m match) error {
+func (a *banAction) perform(r *rule, m entry) error {
 	log.Printf("%s: (not) banning: %+v", r.name, m)
 	return nil
 }
@@ -29,7 +29,7 @@ func (a *logAction) initialize(ps []string) error {
 	return nil
 }
 
-func (a *logAction) perform(r *rule, m match) error {
+func (a *logAction) perform(r *rule, m entry) error {
 	log.Printf("%s: %+v", r.name, m)
 	return nil
 }

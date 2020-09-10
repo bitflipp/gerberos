@@ -2,7 +2,7 @@ package main
 
 type source interface {
 	initialize(ps []string) error
-	matches() (chan match, error)
+	entries() (chan entry, error)
 }
 
 type fileSource struct {

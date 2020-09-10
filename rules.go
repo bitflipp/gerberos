@@ -70,18 +70,20 @@ func (r *rule) initialize() error {
 }
 
 func (r *rule) worker() {
-	c, err := r.source.matches()
+	c, err := r.source.entries()
 	if err != nil {
-		log.Printf("%s: failed to initialize matches channel: %s", r.name, err)
+		log.Printf("%s: failed to initialize entries channel: %s", r.name, err)
 		return
 	}
 	for m := range c {
 		if m.err == nil {
+			if !r.regexp.MatchString(m.line) {
+				continue
+			}
+
 			if err := r.action.perform(r, m); err != nil {
 				log.Printf("%s: failed to perform action: %s", r.name, err)
 			}
-		} else {
-			log.Printf("%s: failed to create match: %s", r.name, m.err)
 		}
 	}
 }
