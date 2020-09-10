@@ -1,0 +1,10 @@
+[rules]
+    [rules.test-file]
+    source = ["file", "/"]
+    regexp = ".*"
+    action = ["ban", "12h"]
+
+    [rules.test-systemd]
+    source = ["systemd", "NetworkManager"]
+    regexp = ".*"
+    action = ["log"]
