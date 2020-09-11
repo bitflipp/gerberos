@@ -72,6 +72,10 @@ func main() {
 	exec.Command("ip6tables", "-I", chainName, "-j", "DROP", "-m", "set", "--match-set", ipset6Name, "src").Run()
 	exec.Command("ip6tables", "-I", "INPUT", "-j", chainName).Run()
 
+	defer func() {
+		reset()
+	}()
+
 	// Initialize rules
 	for n, r := range configuration.Rules {
 		r.name = n
@@ -89,6 +93,4 @@ func main() {
 	ic := make(chan os.Signal, 1)
 	signal.Notify(ic, syscall.SIGINT, syscall.SIGTERM)
 	<-ic
-
-	reset()
 }

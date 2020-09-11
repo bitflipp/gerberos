@@ -6,43 +6,47 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
-	"time"
 )
 
 type source interface {
-	initialize([]string) error
-	entries() (chan *entry, error)
+	initialize(*rule) error
+	matches() (chan *match, error)
 }
 
 type fileSource struct {
+	rule *rule
 	path string
 }
 
-func (s *fileSource) initialize(ps []string) error {
-	if len(ps) == 0 {
+func (s *fileSource) initialize(r *rule) error {
+	s.rule = r
+
+	if len(r.Source) < 2 {
 		return errors.New("missing path parameter")
 	}
-	s.path = ps[0]
+	s.path = r.Source[1]
 
-	if fi, err := os.Stat(ps[0]); err == nil && fi.IsDir() {
+	if fi, err := os.Stat(s.path); err == nil && fi.IsDir() {
 		return fmt.Errorf("'%s' is a directory", s.path)
 	}
 
 	return nil
 }
 
-func (s *fileSource) entries() (chan *entry, error) {
+func (s *fileSource) matches() (chan *match, error) {
 	cmd := exec.Command("tail", "-n", "0", "-F", s.path)
 	o, err := cmd.StdoutPipe()
 	if err != nil {
 		return nil, err
 	}
 
-	c := make(chan *entry, 1)
+	c := make(chan *match, 1)
 	go func() {
-		s := bufio.NewScanner(o)
-		for s.Scan() {
-			c <- newEntry(s.Text(), time.Now())
+		sc := bufio.NewScanner(o)
+		for sc.Scan() {
+			if m, err := newMatch(s.rule, sc.Text()); err == nil {
+				c <- m
+			}
 		}
 	}()
 
@@ -50,30 +54,35 @@ func (s *fileSource) entries() (chan *entry, error) {
 }
 
 type systemdSource struct {
+	rule    *rule
 	service string
 }
 
-func (s *systemdSource) initialize(ps []string) error {
-	if len(ps) == 0 {
+func (s *systemdSource) initialize(r *rule) error {
+	s.rule = r
+
+	if len(r.Source) < 2 {
 		return errors.New("missing service parameter")
 	}
-	s.service = ps[0]
+	s.service = r.Source[1]
 
 	return nil
 }
 
-func (s *systemdSource) entries() (chan *entry, error) {
+func (s *systemdSource) matches() (chan *match, error) {
 	cmd := exec.Command("journalctl", "-n", "0", "-f", "-u", s.service)
 	o, err := cmd.StdoutPipe()
 	if err != nil {
 		return nil, err
 	}
 
-	c := make(chan *entry, 1)
+	c := make(chan *match, 1)
 	go func() {
-		s := bufio.NewScanner(o)
-		for s.Scan() {
-			c <- newEntry(s.Text(), time.Now())
+		sc := bufio.NewScanner(o)
+		for sc.Scan() {
+			if m, err := newMatch(s.rule, sc.Text()); err == nil {
+				c <- m
+			}
 		}
 	}()
 

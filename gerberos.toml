@@ -1,5 +1,5 @@
 [rules]
     [rules.test-file]
     source = ["file", "/"]
-    regexp = ".*"
+    regexp = "%ip6%"
     action = ["ban", "1m"]

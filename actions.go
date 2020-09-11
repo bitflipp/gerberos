@@ -9,21 +9,24 @@ import (
 )
 
 type action interface {
-	initialize([]string) error
-	perform(*rule, *entry) error
+	initialize(*rule) error
+	perform(*match) error
 }
 
 type banAction struct {
+	rule     *rule
 	duration time.Duration
 }
 
-func (a *banAction) initialize(ps []string) error {
-	if len(ps) == 0 {
+func (a *banAction) initialize(r *rule) error {
+	a.rule = r
+
+	if len(r.Action) < 2 {
 		return errors.New("missing duration parameter")
 	}
 
-	if d, err := time.ParseDuration(ps[0]); err != nil {
-		return errors.New("invalid duration parameter")
+	if d, err := time.ParseDuration(r.Action[1]); err != nil {
+		return fmt.Errorf("failed to parse duration parameter: %s", err)
 	} else {
 		a.duration = d
 	}
@@ -31,30 +34,32 @@ func (a *banAction) initialize(ps []string) error {
 	return nil
 }
 
-func (a *banAction) perform(r *rule, e *entry) error {
+func (a *banAction) perform(e *match) error {
 	s := ipset4Name
 	if e.ipv6 {
 		s = ipset6Name
 	}
 	d := int64(a.duration.Seconds())
 	if err := exec.Command("ipset", "test", s, e.host).Run(); err != nil {
-		log.Printf("%s: adding '%s' to ipset '%s' with %d seconds timeout", r.name, e.host, s, d)
-		if err := exec.Command("ipset", "add", s, e.host, "timeout", fmt.Sprint(d)).Run(); err != nil {
-			log.Printf("%s: failed to add '%s' to ipset '%s' with %d seconds timeout: %s", r.name, e.host, s, d, err)
-			return err
-		}
+		log.Printf("%s: adding '%s' to ipset '%s' with %d second(s) timeout", a.rule.name, e.host, s, d)
+		exec.Command("ipset", "add", s, e.host, "timeout", fmt.Sprint(d)).Run()
 	}
 
 	return nil
 }
 
-type logAction struct{}
+type logAction struct {
+	rule *rule
+}
 
-func (a *logAction) initialize(ps []string) error {
+func (a *logAction) initialize(r *rule) error {
+	a.rule = r
+
 	return nil
 }
 
-func (a *logAction) perform(r *rule, e *entry) error {
-	log.Printf("%s: %s", r.name, e)
+func (a *logAction) perform(e *match) error {
+	log.Printf("%s: %s", a.rule.name, e)
+
 	return nil
 }
