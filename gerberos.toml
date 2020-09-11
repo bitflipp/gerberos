@@ -1,5 +1,12 @@
 [rules]
-    [rules.test-file]
-    source = ["file", "/"]
-    regexp = "%ip6%"
-    action = ["ban", "1m"]
+    [rules.apache-fuzzing-4]
+    source = ["file", "/var/log/apache2/access.log"]
+    regexp = "%ip4%.*40(0|8) 0 \"-\" \"-\""
+    action = ["ban", "1h"]
+    # action = ["log"]
+
+    [rules.apache-fuzzing-6]
+    source = ["file", "/var/log/apache2/access.log"]
+    regexp = "%ip6%.*40(0|8) 0 \"-\" \"-\""
+    action = ["ban", "1h"]
+    # action = ["log"]

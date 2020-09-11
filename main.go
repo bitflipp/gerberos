@@ -71,16 +71,13 @@ func main() {
 	exec.Command("ip6tables", "-N", chainName).Run()
 	exec.Command("ip6tables", "-I", chainName, "-j", "DROP", "-m", "set", "--match-set", ipset6Name, "src").Run()
 	exec.Command("ip6tables", "-I", "INPUT", "-j", chainName).Run()
-
-	defer func() {
-		reset()
-	}()
+	defer reset()
 
 	// Initialize rules
 	for n, r := range configuration.Rules {
 		r.name = n
 		if err := r.initialize(); err != nil {
-			log.Fatalf("failed to initialize rule '%s': %s", n, err)
+			log.Fatalf(`failed to initialize rule "%s": %s`, n, err)
 		}
 	}
 

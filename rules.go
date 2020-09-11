@@ -51,7 +51,7 @@ func (r *rule) initializeSource() error {
 
 func (r *rule) initializeRegexp() error {
 	if strings.Contains(r.Regexp, "(?P<host>") {
-		return errors.New("regexp must not contain a subexpression named 'host' ('(?P<host>')")
+		return errors.New(`regexp must not contain a subexpression named "host" ("(?P<host>")`)
 	}
 
 	var re string
@@ -64,7 +64,7 @@ func (r *rule) initializeRegexp() error {
 		re = strings.Replace(r.Regexp, ipv6MagicText, ipv6RegexpText, 1)
 		r.ipv6 = true
 	default:
-		return fmt.Errorf("regexp must contain exactly one of '%s' or '%s'", ipv4MagicText, ipv6MagicText)
+		return fmt.Errorf(`regexp must contain exactly one of "%s" and "%s"`, ipv4MagicText, ipv6MagicText)
 	}
 
 	if e, err := regexp.Compile(re); err != nil {

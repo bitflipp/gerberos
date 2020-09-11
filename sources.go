@@ -27,7 +27,7 @@ func (s *fileSource) initialize(r *rule) error {
 	s.path = r.Source[1]
 
 	if fi, err := os.Stat(s.path); err == nil && fi.IsDir() {
-		return fmt.Errorf("'%s' is a directory", s.path)
+		return fmt.Errorf(`"%s" is a directory`, s.path)
 	}
 
 	return nil

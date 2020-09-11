@@ -41,7 +41,7 @@ func (a *banAction) perform(e *match) error {
 	}
 	d := int64(a.duration.Seconds())
 	if err := exec.Command("ipset", "test", s, e.host).Run(); err != nil {
-		log.Printf("%s: adding '%s' to ipset '%s' with %d second(s) timeout", a.rule.name, e.host, s, d)
+		log.Printf(`%s: adding "%s" to ipset "%s" with %d second(s) timeout`, a.rule.name, e.host, s, d)
 		exec.Command("ipset", "add", s, e.host, "timeout", fmt.Sprint(d)).Run()
 	}
 
