@@ -1,6 +1,6 @@
 # gerberos
 
-Simple (log) file watcher
+Simple (log) file watcher and ipset-based banning utility
 
 ## Example configuration file (TOML)
 
