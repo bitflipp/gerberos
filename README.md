@@ -4,7 +4,7 @@ Simple (log) file watcher
 
 ## Example configuration file (TOML)
 
-```
+```toml
 [rules]
     [rules.apache-fuzzing-4]
     # Available sources are
