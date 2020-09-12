@@ -6,23 +6,22 @@ Simple (log) file watcher and ipset-based banning utility
 
 ```toml
 [rules]
-    [rules.apache-fuzzing-4]
+    [rules.apache-fuzzing]
     # Available sources are
     # - ["file", "<path to non-directory file>"]
     # - ["systemd", "<name of systemd service>"]
     source = ["file", "/var/log/apache2/access.log"]
-    # Must contain exactly one of "%ip4%" and "%ip6%".
+    # "%ip%" must appear exactly once in regexp.
     # It will be replaced with a subexpression named
-    # "host" matching IPv4 and IPv6 addresses, respec-
-    # tively.
-    regexp = "%ip4%.*40(0|8) 0 \"-\" \"-\""
+    # "host" matching IPv4 and IPv6 addresses.
+    regexp = "%ip%.*40(0|8) 0 \"-\" \"-\""
     # Available actions are
     # - ["ban", "<value parsable by time.ParseDuration>"]
     # - ["log"]
     action = ["ban", "1h"]
 
-    [rules.apache-fuzzing-6]
-    source = ["file", "/var/log/apache2/access.log"]
-    regexp = "%ip6%.*40(0|8) 0 \"-\" \"-\""
-    action = ["ban", "1h"]
+    [rules.sshd-invalid-user]
+    source = ["file", "/var/log/auth.log"]
+    regexp = "Invalid user.*%ip%"
+    action = ["ban", "24h"]
 ```

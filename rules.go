@@ -9,16 +9,12 @@ import (
 )
 
 const (
-	ipv4MagicText = "%ip4%"
-	ipv6MagicText = "%ip6%"
+	ipMagicText = "%ip%"
 )
 
 var (
-	ipv4MagicRegexp = regexp.MustCompile(ipv4MagicText)
-	ipv6MagicRegexp = regexp.MustCompile(ipv6MagicText)
-	// https://gist.github.com/syzdek/6086792
-	ipv4RegexpText  = `(?P<host>((25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9])\.){3,3}(25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9]))`
-	ipv6RegexpText  = `(?P<host>(([0-9a-fA-F]{1,4}:){7,7}[0-9a-fA-F]{1,4}|([0-9a-fA-F]{1,4}:){1,7}:|([0-9a-fA-F]{1,4}:){1,6}:[0-9a-fA-F]{1,4}|([0-9a-fA-F]{1,4}:){1,5}(:[0-9a-fA-F]{1,4}){1,2}|([0-9a-fA-F]{1,4}:){1,4}(:[0-9a-fA-F]{1,4}){1,3}|([0-9a-fA-F]{1,4}:){1,3}(:[0-9a-fA-F]{1,4}){1,4}|([0-9a-fA-F]{1,4}:){1,2}(:[0-9a-fA-F]{1,4}){1,5}|[0-9a-fA-F]{1,4}:((:[0-9a-fA-F]{1,4}){1,6})|:((:[0-9a-fA-F]{1,4}){1,7}|:)|fe80:(:[0-9a-fA-F]{0,4}){0,4}%[0-9a-zA-Z]{1,}|::(ffff(:0{1,4}){0,1}:){0,1}((25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9])\.){3,3}(25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9])|([0-9a-fA-F]{1,4}:){1,4}:((25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9])\.){3,3}(25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9])))`
+	ipMagicRegexp = regexp.MustCompile(ipMagicText)
+	ipRegexpText  = `(?P<host>(25[0-5]|2[0-4]\d|[0-1]?\d?\d)(\.(25[0-5]|2[0-4]\d|[0-1]?\d?\d)){3}|(?:[0-9a-fA-F]{1,4}:){7}[0-9a-fA-F]{1,4}|((?:[0-9A-Fa-f]{1,4}(?::[0-9A-Fa-f]{1,4})*)?)::((?:[0-9A-Fa-f]{1,4}(?::[0-9A-Fa-f]{1,4})*)?))`
 )
 
 type rule struct {
@@ -29,7 +25,6 @@ type rule struct {
 	name   string
 	source source
 	regexp *regexp.Regexp
-	ipv6   bool
 	action action
 }
 
@@ -55,18 +50,10 @@ func (r *rule) initializeRegexp() error {
 		return errors.New(`regexp must not contain a subexpression named "host" ("(?P<host>")`)
 	}
 
-	var re string
-	o4 := len(ipv4MagicRegexp.FindAllStringIndex(r.Regexp, -1))
-	o6 := len(ipv6MagicRegexp.FindAllStringIndex(r.Regexp, -1))
-	switch {
-	case o4 == 1 && o6 == 0:
-		re = strings.Replace(r.Regexp, ipv4MagicText, ipv4RegexpText, 1)
-	case o4 == 0 && o6 == 1:
-		re = strings.Replace(r.Regexp, ipv6MagicText, ipv6RegexpText, 1)
-		r.ipv6 = true
-	default:
-		return fmt.Errorf(`regexp must contain exactly one of "%s" and "%s"`, ipv4MagicText, ipv6MagicText)
+	if len(ipMagicRegexp.FindAllStringIndex(r.Regexp, -1)) != 1 {
+		return fmt.Errorf(`"%s" must appear exactly once in regexp`, ipMagicText)
 	}
+	re := strings.Replace(r.Regexp, ipMagicText, ipRegexpText, 1)
 
 	if e, err := regexp.Compile(re); err != nil {
 		return err

@@ -3,6 +3,7 @@ package main
 import (
 	"errors"
 	"fmt"
+	"strings"
 	"time"
 )
 
@@ -18,14 +19,17 @@ func newMatch(r *rule, l string) (*match, error) {
 	if len(m) == 0 {
 		return nil, errors.New("line does not match regular expression")
 	}
+
 	sm := make(map[string]string)
 	for i, name := range r.regexp.SubexpNames() {
 		if i != 0 && name != "" {
 			sm[name] = m[i]
 		}
 	}
+	host := sm["host"]
+	ipv6 := strings.Contains(host, ":")
 
-	return &match{line: l, time: time.Now(), host: sm["host"], ipv6: r.ipv6}, nil
+	return &match{line: l, time: time.Now(), host: host, ipv6: ipv6}, nil
 }
 
 func (m match) String() string {
