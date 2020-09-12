@@ -9,7 +9,7 @@ import (
 )
 
 const (
-	ipMagicText = "%ip%"
+	ipMagicText = "%host%"
 )
 
 var (

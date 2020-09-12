@@ -11,10 +11,10 @@ Simple (log) file watcher and ipset-based banning utility
     # - ["file", "<path to non-directory file>"]
     # - ["systemd", "<name of systemd service>"]
     source = ["file", "/var/log/apache2/access.log"]
-    # "%ip%" must appear exactly once in regexp.
+    # "%host%" must appear exactly once in regexp.
     # It will be replaced with a subexpression named
     # "host" matching IPv4 and IPv6 addresses.
-    regexp = "%ip%.*40(0|8) 0 \"-\" \"-\""
+    regexp = "%host%.*40(0|8) 0 \"-\" \"-\""
     # Available actions are
     # - ["ban", "<value parsable by time.ParseDuration>"]
     # - ["log"]
@@ -22,6 +22,6 @@ Simple (log) file watcher and ipset-based banning utility
 
     [rules.sshd-invalid-user]
     source = ["file", "/var/log/auth.log"]
-    regexp = "Invalid user.*%ip%"
+    regexp = "Invalid user.*%host%"
     action = ["ban", "24h"]
 ```
