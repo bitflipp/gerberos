@@ -34,15 +34,15 @@ func (a *banAction) initialize(r *rule) error {
 	return nil
 }
 
-func (a *banAction) perform(e *match) error {
+func (a *banAction) perform(m *match) error {
 	s := ipset4Name
-	if e.ipv6 {
+	if m.ipv6 {
 		s = ipset6Name
 	}
 	d := int64(a.duration.Seconds())
-	if err := exec.Command("ipset", "test", s, e.host).Run(); err != nil {
-		exec.Command("ipset", "add", s, e.host, "timeout", fmt.Sprint(d)).Run()
-		log.Printf(`%s: added "%s" to ipset "%s" with %d second(s) timeout`, a.rule.name, e.host, s, d)
+	if err := exec.Command("ipset", "test", s, m.host).Run(); err != nil {
+		exec.Command("ipset", "add", s, m.host, "timeout", fmt.Sprint(d)).Run()
+		log.Printf(`%s: added "%s" to ipset "%s" with %d second(s) timeout`, a.rule.name, m.host, s, d)
 	}
 
 	return nil
@@ -58,8 +58,8 @@ func (a *logAction) initialize(r *rule) error {
 	return nil
 }
 
-func (a *logAction) perform(e *match) error {
-	log.Printf("%s: %s", a.rule.name, e)
+func (a *logAction) perform(m *match) error {
+	log.Printf("%s: %s", a.rule.name, m)
 
 	return nil
 }

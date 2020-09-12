@@ -6,6 +6,8 @@ import (
 	"os"
 	"os/exec"
 	"os/signal"
+	"path"
+	"strings"
 	"syscall"
 
 	"github.com/BurntSushi/toml"
@@ -30,6 +32,27 @@ func reset() {
 	exec.Command("ip6tables", "-D", "INPUT", "-j", chainName).Run()
 	exec.Command("ipset", "destroy", ipset4Name).Run()
 	exec.Command("ipset", "destroy", ipset6Name).Run()
+}
+
+func alreadyRunningInstance() (bool, error) {
+	out, err := exec.Command("ps", "axco", "command").Output()
+	if err != nil {
+		return false, err
+	}
+
+	n := path.Base(os.Args[0])
+	oc := false
+	for _, p := range strings.Split(string(out), "\n") {
+		if p == n {
+			if oc {
+				return true, nil
+			} else {
+				oc = true
+			}
+		}
+	}
+
+	return false, nil
 }
 
 func main() {
@@ -59,6 +82,15 @@ func main() {
 	defer cf.Close()
 	if _, err := toml.DecodeReader(cf, &configuration); err != nil {
 		log.Fatalf("failed to read configuration file: %s", err)
+	}
+
+	// Already running instance
+	r, err := alreadyRunningInstance()
+	if err != nil {
+		log.Fatalf("failed to check for an already running instance: %s", err)
+	}
+	if r {
+		log.Fatalf("an instance of gerberos is already running")
 	}
 
 	// Create ipsets and ip(6)tables entries

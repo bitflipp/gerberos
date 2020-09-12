@@ -1,6 +1,6 @@
 # gerberos
 
-Simple (log) file watcher and ipset-based banning utility
+Simple (log) file watcher and ipset-based banning utility for Linux.
 
 ## Example configuration file (TOML)
 
@@ -25,3 +25,7 @@ Simple (log) file watcher and ipset-based banning utility
     regexp = "Invalid user.*%host%"
     action = ["ban", "24h"]
 ```
+
+## Privileges
+
+iptables requires `CAP_NET_RAW` and `CAP_NET_ADMIN`. It is recommended to run gerberos as root. `setcap` may be used instead.
