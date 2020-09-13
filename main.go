@@ -10,7 +10,6 @@ import (
 	"path"
 	"strings"
 	"syscall"
-	"time"
 
 	"github.com/BurntSushi/toml"
 )
@@ -190,17 +189,15 @@ func main() {
 		spawnWorker(r)
 	}
 
-	// Worker respawning mechanism
-	go func() {
-		for {
-			r := <-respawnWorkerChan
-			time.Sleep(2 * time.Second)
-			spawnWorker(r)
-		}
-	}()
-
-	// Wait for SIGINT or SIGTERM
+	// Wait for SIGINT or SIGTERM and respawn workers
 	ic := make(chan os.Signal, 1)
 	signal.Notify(ic, syscall.SIGINT, syscall.SIGTERM)
-	<-ic
+	for {
+		select {
+		case <-ic:
+			return
+		case r := <-respawnWorkerChan:
+			spawnWorker(r)
+		}
+	}
 }

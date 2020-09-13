@@ -8,6 +8,7 @@ import (
 	"os/exec"
 	"regexp"
 	"strings"
+	"time"
 )
 
 const (
@@ -138,6 +139,7 @@ func (r *rule) worker() {
 		}
 	}
 
+	time.Sleep(5 * time.Second)
 	log.Printf("%s: queuing worker for respawn", r.name)
 	respawnWorkerChan <- r
 }
