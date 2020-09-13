@@ -106,14 +106,18 @@ func (r *rule) scanProcessOutput(n string, args ...string) (chan *match, error) 
 	if err != nil {
 		return nil, err
 	}
+	e, err := cmd.StderrPipe()
+	if err != nil {
+		return nil, err
+	}
 
 	if err := cmd.Start(); err != nil {
 		return nil, err
 	}
+	log.Printf(`%s: scanning process stdout and stderr: "%s"`, r.name, cmd)
 
 	c := make(chan *match, 1)
 	go func() {
-		log.Printf(`%s: scanning process output: "%s"`, r.name, cmd)
 		sc := bufio.NewScanner(o)
 		for sc.Scan() {
 			if m, err := newMatch(r, sc.Text()); err == nil {
@@ -122,6 +126,12 @@ func (r *rule) scanProcessOutput(n string, args ...string) (chan *match, error) 
 		}
 		close(c)
 		cmd.Wait()
+	}()
+	go func() {
+		sc := bufio.NewScanner(e)
+		for sc.Scan() {
+			log.Printf("%s: process stderr: %s", r.name, sc.Text())
+		}
 	}()
 
 	return c, nil
