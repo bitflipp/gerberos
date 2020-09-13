@@ -7,7 +7,7 @@
     # "%host%" must appear exactly once in regexp.
     # It will be replaced with a subexpression named
     # "host" matching IPv4 and IPv6 addresses.
-    regexp = "%host%.*40(0|8) 0 \"-\" \"-\""
+    regexp = "%host%.*?40(0|8) 0 \"-\" \"-\""
     # Available actions are
     # - ["ban", "<value parsable by time.ParseDuration>"]
     # - ["log"]
@@ -15,5 +15,5 @@
 
     [rules.sshd-invalid-user]
     source = ["file", "/var/log/auth.log"]
-    regexp = "Invalid user.*%host%"
+    regexp = "Invalid user.*?%host%"
     action = ["ban", "24h"]

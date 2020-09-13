@@ -16,8 +16,9 @@ const (
 )
 
 var (
-	ipMagicRegexp = regexp.MustCompile(ipMagicText)
-	ipRegexpText  = `(?P<host>(25[0-5]|2[0-4]\d|[0-1]?\d?\d)(\.(25[0-5]|2[0-4]\d|[0-1]?\d?\d)){3}|(?:[0-9a-fA-F]{1,4}:){7}[0-9a-fA-F]{1,4}|((?:[0-9A-Fa-f]{1,4}(?::[0-9A-Fa-f]{1,4})*)?)::((?:[0-9A-Fa-f]{1,4}(?::[0-9A-Fa-f]{1,4})*)?))`
+	ipMagicRegexp     = regexp.MustCompile(ipMagicText)
+	ipRegexpText      = `(?P<host>(25[0-5]|2[0-4]\d|[0-1]?\d?\d)(\.(25[0-5]|2[0-4]\d|[0-1]?\d?\d)){3}|(?:[0-9a-fA-F]{1,4}:){7}[0-9a-fA-F]{1,4}|((?:[0-9A-Fa-f]{1,4}(?::[0-9A-Fa-f]{1,4})*)?)::((?:[0-9A-Fa-f]{1,4}(?::[0-9A-Fa-f]{1,4})*)?))`
+	dotstarTestRegexp = regexp.MustCompile(`\.\*[^\?]`)
 )
 
 type rule struct {
@@ -51,6 +52,10 @@ func (r *rule) initializeSource() error {
 func (r *rule) initializeRegexp() error {
 	if strings.Contains(r.Regexp, "(?P<host>") {
 		return errors.New(`regexp must not contain a subexpression named "host" ("(?P<host>")`)
+	}
+
+	if dotstarTestRegexp.MatchString(r.Regexp) {
+		log.Printf("Warning: Regexp of rule '%s' contains '.*' - this might have unwanted behaviour. Maybe use '.*?' instead. See documentation for more information.", r.name)
 	}
 
 	if len(ipMagicRegexp.FindAllStringIndex(r.Regexp, -1)) != 1 {
