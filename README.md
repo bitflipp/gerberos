@@ -37,9 +37,13 @@ No additional logic (e.g. counting repeated occurrences within a time interval f
 
     [rules.sshd-invalid-user]
     source = ["file", "/var/log/auth.log"]
-    regexp = "Invalid user.*%host%"
+    regexp = "Invalid user.*?%host%"
     action = ["ban", "24h"]
 ```
+
+**Please note**: Try to avoid using ```.?``` in regexp. This might have unwanted behaviour. Use ```.*?``` instead. 
+
+Example: In the regexp ```Invalid user.*%host%```, the ```.*``` expression will match ```Invalid user derda from 9```, which cuts off the first number of the IP address. By using ```.*?```, this problem will not occur.
 
 ## Example systemd service file
 
