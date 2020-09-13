@@ -113,6 +113,7 @@ func (r *rule) scanProcessOutput(n string, args ...string) (chan *match, error) 
 
 	c := make(chan *match, 1)
 	go func() {
+		log.Printf(`%s: scanning process output: "%s"`, r.name, cmd)
 		sc := bufio.NewScanner(o)
 		for sc.Scan() {
 			if m, err := newMatch(r, sc.Text()); err == nil {
