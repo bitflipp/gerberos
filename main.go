@@ -32,7 +32,7 @@ func execute(n string, args ...string) (string, int, error) {
 	log.Printf("executing: %s", cmd)
 	b, err := cmd.CombinedOutput()
 	if err != nil {
-		if eerr := err.(*exec.ExitError); eerr != nil {
+		if eerr, ok := err.(*exec.ExitError); ok && eerr != nil {
 			return string(b), eerr.ExitCode(), eerr
 		} else {
 			return "", -1, err
