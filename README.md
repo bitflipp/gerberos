@@ -26,6 +26,23 @@ Simple (log) file watcher and ipset-based banning utility for Linux.
     action = ["ban", "24h"]
 ```
 
-## Privileges
+## Example systemd service file
 
-iptables requires `CAP_NET_RAW` and `CAP_NET_ADMIN`. It is recommended to run gerberos as root. `setcap` may be used instead.
+```systemd
+[Unit]
+Description=gerberos
+After=network.target
+
+[Service]
+Type=simple
+Restart=always
+RestartSec=5
+User=gerberos
+WorkingDirectory=/home/gerberos
+ExecStart=/home/gerberos/gerberos
+CapabilityBoundingSet=CAP_NET_RAW CAP_NET_ADMIN
+AmbientCapabilities=CAP_NET_RAW CAP_NET_ADMIN
+
+[Install]
+WantedBy=multi-user.target
+```
