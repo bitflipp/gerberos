@@ -58,8 +58,8 @@ func alreadyRunningInstance() (bool, error) {
 }
 
 func spawnWorker(r *rule) {
-	log.Printf("%s: spawning worker", r.name)
 	go r.worker()
+	log.Printf("%s: spawned worker", r.name)
 }
 
 func main() {

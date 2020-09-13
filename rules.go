@@ -120,7 +120,7 @@ func (r *rule) scanProcessOutput(n string, args ...string) (chan *match, error) 
 		}
 		close(c)
 
-		// Read exit status
+		// Read exit status to prevent creating a zombie process.
 		cmd.Wait()
 	}()
 
