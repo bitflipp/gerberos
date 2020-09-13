@@ -4,7 +4,7 @@ gerberos scans sources for lines matching regular expressions and containing IPv
 Possible sources are (not necessarily existant) non-directory files and systemd journals.
 Addresses can be logged or added to ipsets (`gerberos4` and `gerberos6`) that gerberos will manage autonomously.
 
-No additional logic (e.g. like counting repeated occurrences within a time interval for authentication purposes) is applied. This is to adhere to the [Unix philosophy](https://en.wikipedia.org/wiki/Unix_philosophy), but impacts gerberos' out-of-the-box usefulness for specific use cases when compared to tools like [fail2ban](https://github.com/fail2ban/fail2ban).
+No additional logic (e.g. counting repeated occurrences within a time interval for authentication purposes) is applied. This is to adhere to the [Unix philosophy](https://en.wikipedia.org/wiki/Unix_philosophy), but impacts gerberos' out-of-the-box usefulness for specific use cases when compared to tools like [fail2ban](https://github.com/fail2ban/fail2ban).
 
 ## Requirements
 
