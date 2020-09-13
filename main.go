@@ -9,6 +9,7 @@ import (
 	"path"
 	"strings"
 	"syscall"
+	"time"
 
 	"github.com/BurntSushi/toml"
 )
@@ -23,6 +24,7 @@ var (
 	configuration struct {
 		Rules map[string]*rule
 	}
+	respawnWorkerChan = make(chan *rule, 1)
 )
 
 func reset() {
@@ -53,6 +55,11 @@ func alreadyRunningInstance() (bool, error) {
 	}
 
 	return false, nil
+}
+
+func spawnWorker(r *rule) {
+	log.Printf("%s: spawning worker", r.name)
+	go r.worker()
 }
 
 func main() {
@@ -115,8 +122,17 @@ func main() {
 
 	// Spawn workers
 	for _, r := range configuration.Rules {
-		go r.worker()
+		spawnWorker(r)
 	}
+
+	// Worker respawning mechanism
+	go func() {
+		for {
+			r := <-respawnWorkerChan
+			time.Sleep(2 * time.Second)
+			spawnWorker(r)
+		}
+	}()
 
 	// Wait for SIGINT or SIGTERM
 	ic := make(chan os.Signal, 1)

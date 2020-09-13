@@ -13,24 +13,25 @@ func validRule() *rule {
 }
 
 func TestValidRules(t *testing.T) {
-	{
+	ir := func(f func(r *rule)) {
 		r := validRule()
+		f(r)
 		if err := r.initialize(); err != nil {
 			t.Errorf("failed to initialize rule: %s", err)
 		}
 	}
-	{
-		r := validRule()
+
+	ir(func(r *rule) {})
+	ir(func(r *rule) {
 		r.Action = []string{"log"}
+	})
+	ir(func(r *rule) {
 		r.Source = []string{"systemd", "service"}
-		if err := r.initialize(); err != nil {
-			t.Errorf("failed to initialize rule: %s", err)
-		}
-	}
+	})
 }
 
 func TestInvalidRules(t *testing.T) {
-	er := func(s string, f func(r *rule)) {
+	ee := func(s string, f func(r *rule)) {
 		r := validRule()
 		f(r)
 		if err := r.initialize(); err == nil {
@@ -38,43 +39,43 @@ func TestInvalidRules(t *testing.T) {
 		}
 	}
 
-	er("missing action", func(r *rule) {
+	ee("missing action", func(r *rule) {
 		r.Action = []string{}
 	})
-	er("unknown action", func(r *rule) {
+	ee("unknown action", func(r *rule) {
 		r.Action = []string{"unknown"}
 	})
-	er("ban action: missing duration parameter", func(r *rule) {
+	ee("ban action: missing duration parameter", func(r *rule) {
 		r.Action = []string{"ban"}
 	})
-	er("ban action: invalid duration parameter", func(r *rule) {
+	ee("ban action: invalid duration parameter", func(r *rule) {
 		r.Action = []string{"ban", "1hour"}
 	})
-	er("invalid host magic", func(r *rule) {
+	ee("invalid host magic", func(r *rule) {
 		r.Regexp = "%chost%"
 	})
-	er("duplicate host magic", func(r *rule) {
+	ee("duplicate host magic", func(r *rule) {
 		r.Regexp = "%host% %host%"
 	})
-	er("syntactically incorrect regexp", func(r *rule) {
+	ee("syntactically incorrect regexp", func(r *rule) {
 		r.Regexp = "%host% ["
 	})
-	er("forbidden subexpression", func(r *rule) {
+	ee("forbidden subexpression", func(r *rule) {
 		r.Regexp = "%host% (?P<host>.*)"
 	})
-	er("missing source", func(r *rule) {
+	ee("missing source", func(r *rule) {
 		r.Source = []string{}
 	})
-	er("unknown source", func(r *rule) {
+	ee("unknown source", func(r *rule) {
 		r.Source = []string{"unknown"}
 	})
-	er("file source: missing path parameter", func(r *rule) {
+	ee("file source: missing path parameter", func(r *rule) {
 		r.Source = []string{"file"}
 	})
-	er("file source: path is a directory", func(r *rule) {
+	ee("file source: path is a directory", func(r *rule) {
 		r.Source = []string{"file", "/"}
 	})
-	er("systemd source: missing service parameter", func(r *rule) {
+	ee("systemd source: missing service parameter", func(r *rule) {
 		r.Source = []string{"systemd"}
 	})
 }

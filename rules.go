@@ -1,9 +1,11 @@
 package main
 
 import (
+	"bufio"
 	"errors"
 	"fmt"
 	"log"
+	"os/exec"
 	"regexp"
 	"strings"
 )
@@ -97,6 +99,34 @@ func (r *rule) initialize() error {
 	return nil
 }
 
+func (r *rule) scanProcessOutput(n string, args ...string) (chan *match, error) {
+	cmd := exec.Command(n, args...)
+	o, err := cmd.StdoutPipe()
+	if err != nil {
+		return nil, err
+	}
+
+	if err := cmd.Start(); err != nil {
+		return nil, err
+	}
+
+	c := make(chan *match, 1)
+	go func() {
+		sc := bufio.NewScanner(o)
+		for sc.Scan() {
+			if m, err := newMatch(r, sc.Text()); err == nil {
+				c <- m
+			}
+		}
+		close(c)
+
+		// Read exit status
+		cmd.Wait()
+	}()
+
+	return c, nil
+}
+
 func (r *rule) worker() {
 	c, err := r.source.matches()
 	if err != nil {
@@ -109,4 +139,7 @@ func (r *rule) worker() {
 			log.Printf("%s: failed to perform action: %s", r.name, err)
 		}
 	}
+
+	log.Printf("%s: queuing worker for respawn", r.name)
+	respawnWorkerChan <- r
 }

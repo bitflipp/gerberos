@@ -1,11 +1,9 @@
 package main
 
 import (
-	"bufio"
 	"errors"
 	"fmt"
 	"os"
-	"os/exec"
 )
 
 type source interface {
@@ -34,23 +32,7 @@ func (s *fileSource) initialize(r *rule) error {
 }
 
 func (s *fileSource) matches() (chan *match, error) {
-	cmd := exec.Command("tail", "-n", "0", "-F", s.path)
-	o, err := cmd.StdoutPipe()
-	if err != nil {
-		return nil, err
-	}
-
-	c := make(chan *match, 1)
-	go func() {
-		sc := bufio.NewScanner(o)
-		for sc.Scan() {
-			if m, err := newMatch(s.rule, sc.Text()); err == nil {
-				c <- m
-			}
-		}
-	}()
-
-	return c, cmd.Start()
+	return s.rule.scanProcessOutput("tail", "-n", "0", "-F", s.path)
 }
 
 type systemdSource struct {
@@ -70,21 +52,5 @@ func (s *systemdSource) initialize(r *rule) error {
 }
 
 func (s *systemdSource) matches() (chan *match, error) {
-	cmd := exec.Command("journalctl", "-n", "0", "-f", "-u", s.service)
-	o, err := cmd.StdoutPipe()
-	if err != nil {
-		return nil, err
-	}
-
-	c := make(chan *match, 1)
-	go func() {
-		sc := bufio.NewScanner(o)
-		for sc.Scan() {
-			if m, err := newMatch(s.rule, sc.Text()); err == nil {
-				c <- m
-			}
-		}
-	}()
-
-	return c, cmd.Start()
+	return s.rule.scanProcessOutput("journalctl", "-n", "0", "-f", "-u", s.service)
 }
