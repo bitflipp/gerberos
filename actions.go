@@ -4,7 +4,6 @@ import (
 	"errors"
 	"fmt"
 	"log"
-	"os/exec"
 	"time"
 )
 
@@ -40,9 +39,12 @@ func (a *banAction) perform(m *match) error {
 		s = ipset6Name
 	}
 	d := int64(a.duration.Seconds())
-	if err := exec.Command("ipset", "test", s, m.host).Run(); err != nil {
-		exec.Command("ipset", "add", s, m.host, "timeout", fmt.Sprint(d)).Run()
-		log.Printf(`%s: added "%s" to ipset "%s" with %d second(s) timeout`, a.rule.name, m.host, s, d)
+	if _, _, err := execute("ipset", "test", s, m.host); err != nil {
+		if _, _, err := execute("ipset", "add", s, m.host, "timeout", fmt.Sprint(d)); err != nil {
+			log.Printf(`%s: failed to add "%s" to ipset "%s" with %d second(s) timeout: %s`, a.rule.name, m.host, s, d, err)
+		} else {
+			log.Printf(`%s: added "%s" to ipset "%s" with %d second(s) timeout`, a.rule.name, m.host, s, d)
+		}
 	}
 
 	return nil

@@ -9,6 +9,7 @@ No additional logic (e.g. authentication logic like counting repeated occurrence
 ## Requirements
 
 - Go 1.15.2 (development only)
+- GNU Make 4.3 (development only, optional)
 - ipset 6.34
 - iptables 1.6.1
 
