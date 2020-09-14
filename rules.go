@@ -132,6 +132,9 @@ func (r *rule) initializeOccurrences() error {
 	if err != nil {
 		return fmt.Errorf("failed to parse count parameter: %s", err)
 	}
+	if c < 2 {
+		return errors.New("invalid count parameter")
+	}
 
 	if len(r.Occurrences) < 2 {
 		return errors.New("missing interval parameter")

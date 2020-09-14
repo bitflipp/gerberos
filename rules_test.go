@@ -6,9 +6,10 @@ import (
 
 func validRule() *rule {
 	return &rule{
-		Action: []string{"ban", "1h"},
-		Regexp: "%host%",
-		Source: []string{"file", "FILE"},
+		Action:      []string{"ban", "1h"},
+		Regexp:      "%host%",
+		Source:      []string{"file", "FILE"},
+		Occurrences: []string{"5", "10s"},
 	}
 }
 
@@ -22,6 +23,9 @@ func TestValidRules(t *testing.T) {
 	}
 
 	ir(func(r *rule) {})
+	ir(func(r *rule) {
+		r.Occurrences = nil
+	})
 	ir(func(r *rule) {
 		r.Action = []string{"log"}
 	})
@@ -77,5 +81,20 @@ func TestInvalidRules(t *testing.T) {
 	})
 	ee("systemd source: missing service parameter", func(r *rule) {
 		r.Source = []string{"systemd"}
+	})
+	ee("occurrences: missing count parameter", func(r *rule) {
+		r.Occurrences = []string{}
+	})
+	ee("occurrences: invalid count parameter", func(r *rule) {
+		r.Occurrences = []string{"five"}
+	})
+	ee("occurrences: invalid count parameter 2", func(r *rule) {
+		r.Occurrences = []string{"1"}
+	})
+	ee("occurrences: missing interval parameter", func(r *rule) {
+		r.Occurrences = []string{"5"}
+	})
+	ee("occurrences: invalid interval parameter", func(r *rule) {
+		r.Occurrences = []string{"5", "5g"}
 	})
 }

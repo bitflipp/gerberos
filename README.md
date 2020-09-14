@@ -33,7 +33,7 @@ verbose = true
     # "host" matching IPv4 and IPv6 addresses.
     # Please avoid using "x*", as this may match
     # part of the host. Use "x*?" instead.
-    # regexp = "%host%.*40(0|8) 0 \"-\" \"-\""
+    # regexp = "%host%.*?40(0|8) 0 \"-\" \"-\""
     regexp = "%host%"
     # Available actions are
     # - ["ban", "<value parsable by time.ParseDuration>"]

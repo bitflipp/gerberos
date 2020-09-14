@@ -35,6 +35,7 @@ func TestMatches(t *testing.T) {
 	}
 
 	ml("invalid 1", "192.168.0.", "%host%", false)
+	ml("invalid 2", "192.168.1.256", "%host%", false)
 	ml("invalid 2", "192.168.1.1", "%host% extra", false)
 
 	if m := ml("valid 1.1", "prefix 192.168.1.1", "prefix.*?%host%", true); m.host != "192.168.1.1" {
