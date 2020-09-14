@@ -1,7 +1,6 @@
 package main
 
 import (
-	"log"
 	"testing"
 )
 
@@ -25,7 +24,6 @@ func TestMatches(t *testing.T) {
 
 	em := func(s, h string, ipv6 bool) {
 		m := ml(s, h, "%host%", true)
-		log.Println("m is", m)
 		if h != m.host {
 			t.Errorf(`expected host "%s", got "%s"`, h, m.host)
 		}

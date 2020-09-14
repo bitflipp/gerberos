@@ -133,7 +133,7 @@ func (r *rule) initializeOccurrences() error {
 		return fmt.Errorf("failed to parse count parameter: %s", err)
 	}
 	if c < 2 {
-		return errors.New("invalid count parameter")
+		return errors.New("invalid count parameter: must be > 1")
 	}
 
 	if len(r.Occurrences) < 2 {

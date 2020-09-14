@@ -6,7 +6,7 @@ clean:
 
 build: clean
 	mkdir dist
-	go build -o dist/gerberos
+	CGO_ENABLED=0 go build -o dist/gerberos
 
 run: build
 	sudo dist/gerberos
