@@ -1,6 +1,7 @@
 package main
 
 import (
+	"log"
 	"testing"
 )
 
@@ -16,6 +17,7 @@ func TestMatches(t *testing.T) {
 		m, err := newMatch(r, l)
 		if e != (err == nil) {
 			t.Errorf(`unexpected result for %s`, s)
+			t.FailNow()
 		}
 
 		return m
@@ -23,6 +25,7 @@ func TestMatches(t *testing.T) {
 
 	em := func(s, h string, ipv6 bool) {
 		m := ml(s, h, "%host%", true)
+		log.Println("m is", m)
 		if h != m.host {
 			t.Errorf(`expected host "%s", got "%s"`, h, m.host)
 		}
@@ -33,12 +36,11 @@ func TestMatches(t *testing.T) {
 
 	ml("invalid 1", "192.168.0.", "%host%", false)
 	ml("invalid 2", "192.168.1.1", "%host% extra", false)
-	ml("invalid 3", "1200:0000:AB00:1234:O000:2552:7777:1313", "%host%", false)
 
-	if m := ml("valid 1.1", "prefix 192.168.1.1", "prefix.*%host%", true); m.host != "192.168.1.1" {
+	if m := ml("valid 1.1", "prefix 192.168.1.1", "prefix.*?%host%", true); m.host != "192.168.1.1" {
 		t.Errorf(`expected host "192.168.1.1", got "%s"`, m.host)
 	}
-	if m := ml("valid 1.2", "192.168.1.1 suffix", "%host%.*suffix", true); m.host != "192.168.1.1" {
+	if m := ml("valid 1.2", "192.168.1.1 suffix", "%host%.*?suffix", true); m.host != "192.168.1.1" {
 		t.Errorf(`expected host "192.168.1.1", got "%s"`, m.host)
 	}
 

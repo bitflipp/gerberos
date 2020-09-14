@@ -22,14 +22,17 @@ const (
 
 var (
 	configuration struct {
-		Rules map[string]*rule
+		Verbose bool
+		Rules   map[string]*rule
 	}
 	respawnWorkerChan = make(chan *rule, 1)
 )
 
 func execute(n string, args ...string) (string, int, error) {
 	cmd := exec.Command(n, args...)
-	log.Printf("executing: %s", cmd)
+	if configuration.Verbose {
+		log.Printf("executing: %s", cmd)
+	}
 	b, err := cmd.CombinedOutput()
 	if err != nil {
 		if eerr, ok := err.(*exec.ExitError); ok && eerr != nil {

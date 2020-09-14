@@ -3,7 +3,7 @@ package main
 import (
 	"errors"
 	"fmt"
-	"strings"
+	"net"
 	"time"
 )
 
@@ -26,10 +26,18 @@ func newMatch(r *rule, l string) (*match, error) {
 			sm[name] = m[i]
 		}
 	}
-	host := sm["host"]
-	ipv6 := strings.Contains(host, ":")
+	h := sm["host"]
+	ph := net.ParseIP(h)
+	if ph == nil {
+		return nil, fmt.Errorf(`failed to parse matched host "%s"`, h)
+	}
 
-	return &match{line: l, time: time.Now(), host: host, ipv6: ipv6}, nil
+	return &match{
+		line: l,
+		time: time.Now(),
+		host: h,
+		ipv6: ph.To4() == nil,
+	}, nil
 }
 
 func (m match) String() string {

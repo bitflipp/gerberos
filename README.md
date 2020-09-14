@@ -4,7 +4,7 @@ gerberos scans sources for lines matching regular expressions and containing IPv
 Possible sources are (not necessarily existant) non-directory files and systemd journals.
 Addresses can be logged or added to ipsets (`gerberos4` and `gerberos6`) that gerberos will manage autonomously.
 
-No additional logic (e.g. counting repeated occurrences within a time interval for authentication purposes) is applied. This is to adhere to the [Unix philosophy](https://en.wikipedia.org/wiki/Unix_philosophy), but impacts gerberos' out-of-the-box usefulness for specific use cases when compared to tools like [fail2ban](https://github.com/fail2ban/fail2ban).
+Minimal additional logic is applied. This is to adhere to the [Unix philosophy](https://en.wikipedia.org/wiki/Unix_philosophy), but impacts gerberos' out-of-the-box usefulness for specific use cases when compared to tools like [fail2ban](https://github.com/fail2ban/fail2ban).
 
 ## Requirements
 
@@ -20,6 +20,8 @@ No additional logic (e.g. counting repeated occurrences within a time interval f
 ## Example configuration file (TOML)
 
 ```toml
+verbose = true
+
 [rules]
     [rules.apache-fuzzing]
     # Available sources are
@@ -29,21 +31,24 @@ No additional logic (e.g. counting repeated occurrences within a time interval f
     # "%host%" must appear exactly once in regexp.
     # It will be replaced with a subexpression named
     # "host" matching IPv4 and IPv6 addresses.
-    regexp = "%host%.*40(0|8) 0 \"-\" \"-\""
+    # Please avoid using "x*", as this may match
+    # part of the host. Use "x*?" instead.
+    # regexp = "%host%.*40(0|8) 0 \"-\" \"-\""
+    regexp = "%host%"
     # Available actions are
     # - ["ban", "<value parsable by time.ParseDuration>"]
     # - ["log"]
     action = ["ban", "1h"]
+    # Optional. In this case, the action will be triggered
+    # once the same match has occurred 5 times within 10
+    # seconds, resetting the counter.
+    occurrences = ["5", "10s"]
 
     [rules.sshd-invalid-user]
     source = ["file", "/var/log/auth.log"]
     regexp = "Invalid user.*?%host%"
     action = ["ban", "24h"]
 ```
-
-**Please note**: Try to avoid using ```.?``` in regexp. This might have unwanted behaviour. Use ```.*?``` instead. 
-
-Example: In the regexp ```Invalid user.*%host%```, the ```.*``` expression will match ```Invalid user derda from 9```, which cuts off the first number of the IP address. By using ```.*?```, this problem will not occur.
 
 ## Example systemd service file
 

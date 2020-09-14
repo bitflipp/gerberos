@@ -32,7 +32,7 @@ func (s *fileSource) initialize(r *rule) error {
 }
 
 func (s *fileSource) matches() (chan *match, error) {
-	return s.rule.scanProcessOutput("tail", "-n", "0", "-F", s.path)
+	return s.rule.processScanner("tail", "-n", "0", "-F", s.path)
 }
 
 type systemdSource struct {
@@ -52,5 +52,5 @@ func (s *systemdSource) initialize(r *rule) error {
 }
 
 func (s *systemdSource) matches() (chan *match, error) {
-	return s.rule.scanProcessOutput("journalctl", "-n", "0", "-f", "-u", s.service)
+	return s.rule.processScanner("journalctl", "-n", "0", "-f", "-u", s.service)
 }

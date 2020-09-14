@@ -7,6 +7,7 @@ import (
 	"log"
 	"os/exec"
 	"regexp"
+	"strconv"
 	"strings"
 	"time"
 )
@@ -21,15 +22,45 @@ var (
 	dotstarTestRegexp = regexp.MustCompile(`\.\*[^\?]`)
 )
 
-type rule struct {
-	Source []string
-	Regexp string
-	Action []string
+type occurrences struct {
+	registry map[string][]time.Time
+	interval time.Duration
+	count    int
+}
 
-	name   string
-	source source
-	regexp *regexp.Regexp
-	action action
+func (r *occurrences) add(h string) bool {
+	if _, f := r.registry[h]; !f {
+		r.registry[h] = []time.Time{time.Now()}
+		return false
+	}
+
+	r.registry[h] = append(r.registry[h], time.Now())
+	if len(r.registry[h]) > r.count {
+		r.registry[h] = r.registry[h][1:]
+	}
+
+	if len(r.registry[h]) == r.count {
+		d := r.registry[h][r.count-1].Sub(r.registry[h][0])
+		if d <= r.interval {
+			delete(r.registry, h)
+			return true
+		}
+	}
+
+	return false
+}
+
+type rule struct {
+	Source      []string
+	Regexp      string
+	Action      []string
+	Occurrences []string
+
+	name        string
+	source      source
+	regexp      *regexp.Regexp
+	action      action
+	occurrences *occurrences
 }
 
 func (r *rule) initializeSource() error {
@@ -55,7 +86,7 @@ func (r *rule) initializeRegexp() error {
 	}
 
 	if dotstarTestRegexp.MatchString(r.Regexp) {
-		log.Printf("Warning: Regexp of rule '%s' contains '.*' - this might have unwanted behaviour. Maybe use '.*?' instead. See documentation for more information.", r.name)
+		log.Printf(`%s: warning: regexp contains ".*". This might match part of the host and is therefore not recommended. Use ".*?" instead`, r.name)
 	}
 
 	if len(ipMagicRegexp.FindAllStringIndex(r.Regexp, -1)) != 1 {
@@ -89,6 +120,36 @@ func (r *rule) initializeAction() error {
 	return r.action.initialize(r)
 }
 
+func (r *rule) initializeOccurrences() error {
+	if r.Occurrences == nil {
+		return nil
+	}
+
+	if len(r.Occurrences) < 1 {
+		return errors.New("missing count parameter")
+	}
+	c, err := strconv.Atoi(r.Occurrences[0])
+	if err != nil {
+		return fmt.Errorf("failed to parse count parameter: %s", err)
+	}
+
+	if len(r.Occurrences) < 2 {
+		return errors.New("missing interval parameter")
+	}
+	i, err := time.ParseDuration(r.Occurrences[1])
+	if err != nil {
+		return fmt.Errorf("failed to parse interval parameter: %s", err)
+	}
+
+	r.occurrences = &occurrences{
+		registry: make(map[string][]time.Time, 0),
+		interval: i,
+		count:    c,
+	}
+
+	return nil
+}
+
 func (r *rule) initialize() error {
 	if err := r.initializeSource(); err != nil {
 		return err
@@ -102,10 +163,14 @@ func (r *rule) initialize() error {
 		return err
 	}
 
+	if err := r.initializeOccurrences(); err != nil {
+		return err
+	}
+
 	return nil
 }
 
-func (r *rule) scanProcessOutput(n string, args ...string) (chan *match, error) {
+func (r *rule) processScanner(n string, args ...string) (chan *match, error) {
 	cmd := exec.Command(n, args...)
 	o, err := cmd.StdoutPipe()
 	if err != nil {
@@ -127,6 +192,10 @@ func (r *rule) scanProcessOutput(n string, args ...string) (chan *match, error) 
 		for sc.Scan() {
 			if m, err := newMatch(r, sc.Text()); err == nil {
 				c <- m
+			} else {
+				if configuration.Verbose {
+					log.Printf("failed to create match: %s", err)
+				}
 			}
 		}
 		close(c)
@@ -135,7 +204,7 @@ func (r *rule) scanProcessOutput(n string, args ...string) (chan *match, error) 
 	go func() {
 		sc := bufio.NewScanner(e)
 		for sc.Scan() {
-			log.Printf("%s: process stderr: %s", r.name, sc.Text())
+			log.Printf(`%s: process stderr: "%s"`, r.name, sc.Text())
 		}
 	}()
 
@@ -150,8 +219,15 @@ func (r *rule) worker() {
 	}
 
 	for m := range c {
-		if err := r.action.perform(m); err != nil {
-			log.Printf("%s: failed to perform action: %s", r.name, err)
+		p := true
+		if r.occurrences != nil {
+			p = r.occurrences.add(m.host)
+		}
+
+		if p {
+			if err := r.action.perform(m); err != nil {
+				log.Printf("%s: failed to perform action: %s", r.name, err)
+			}
 		}
 	}
 

@@ -1,3 +1,5 @@
+verbose = true
+
 [rules]
     [rules.apache-fuzzing]
     # Available sources are
@@ -7,11 +9,18 @@
     # "%host%" must appear exactly once in regexp.
     # It will be replaced with a subexpression named
     # "host" matching IPv4 and IPv6 addresses.
-    regexp = "%host%.*?40(0|8) 0 \"-\" \"-\""
+    # Please avoid using "x*", as this may match
+    # part of the host. Use "x*?" instead.
+    # regexp = "%host%.*40(0|8) 0 \"-\" \"-\""
+    regexp = "%host%"
     # Available actions are
     # - ["ban", "<value parsable by time.ParseDuration>"]
     # - ["log"]
     action = ["ban", "1h"]
+    # Optional. In this case, the action will be triggered
+    # once the same match has occurred 5 times within 10 
+    # seconds, resetting the counter.
+    occurrences = ["5", "10s"]
 
     [rules.sshd-invalid-user]
     source = ["file", "/var/log/auth.log"]
