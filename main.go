@@ -34,6 +34,7 @@ func execute(n string, args ...string) (string, int, error) {
 	if configuration.Verbose {
 		log.Printf("executing: %s", cmd)
 	}
+
 	b, err := cmd.CombinedOutput()
 	if err != nil {
 		eerr, ok := err.(*exec.ExitError)
@@ -42,30 +43,31 @@ func execute(n string, args ...string) (string, int, error) {
 		}
 		return "", -1, err
 	}
+
 	return string(b), 0, nil
 }
 
 func saveIpsets() error {
-	cmd := exec.Command("ipset", "save")
-
 	f, err := os.Create(*configuration.SaveFilePath)
 	if err != nil {
 		return err
 	}
 	defer f.Close()
+
+	cmd := exec.Command("ipset", "save")
 	cmd.Stdout = f
 
 	return cmd.Run()
 }
 
 func restoreIpsets() error {
-	cmd := exec.Command("ipset", "restore")
-
 	f, err := os.Open(*configuration.SaveFilePath)
 	if err != nil {
 		return err
 	}
 	defer f.Close()
+
+	cmd := exec.Command("ipset", "restore")
 	cmd.Stdin = f
 
 	return cmd.Run()
@@ -197,7 +199,7 @@ func main() {
 		log.Fatalf("an instance of gerberos is already running")
 	}
 
-	// Create ipsets and ip(6)tables entries
+	// Initialize ipsets and ip(6)tables entries
 	if err := deleteIpsetsAndIptablesEntries(); err != nil {
 		log.Fatalf("failed to delete ipsets: %s", err)
 	}
