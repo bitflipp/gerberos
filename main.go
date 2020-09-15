@@ -15,15 +15,17 @@ import (
 )
 
 const (
-	chainName  = "gerberos"
-	ipset4Name = "gerberos4"
-	ipset6Name = "gerberos6"
+	chainName    = "gerberos"
+	ipset4Name   = "gerberos4"
+	ipset6Name   = "gerberos6"
+	saveFilePath = "./gerberos.save"
 )
 
 var (
 	configuration struct {
-		Verbose bool
-		Rules   map[string]*rule
+		Persistent bool
+		Verbose    bool
+		Rules      map[string]*rule
 	}
 	respawnWorkerChan = make(chan *rule, 1)
 )
@@ -44,7 +46,30 @@ func execute(n string, args ...string) (string, int, error) {
 	return string(b), 0, nil
 }
 
-func deleteIpsets() error {
+func saveIpsets() error {
+	cmd := exec.Command("ipset", "save")
+	f, err := os.Create(saveFilePath)
+	if err != nil {
+		return err
+	}
+	defer f.Close()
+	cmd.Stdout = f
+	return cmd.Run()
+}
+
+func restoreIpsets() error {
+	cmd := exec.Command("ipset", "restore")
+	f, err := os.Open(saveFilePath)
+	if err != nil {
+		return err
+	}
+	defer f.Close()
+	cmd.Stdin = f
+	cmd.Stderr = os.Stdout
+	return cmd.Run()
+}
+
+func deleteIpsetsAndIptablesEntries() error {
 	if s, ec, _ := execute("iptables", "-D", chainName, "-j", "DROP", "-m", "set", "--match-set", ipset4Name, "src"); ec > 2 {
 		return fmt.Errorf(`failed to delete iptables entry for set "%s": %s`, ipset4Name, s)
 	}
@@ -80,6 +105,11 @@ func createIpsets() error {
 	if s, ec, _ := execute("ipset", "create", ipset6Name, "hash:ip", "family", "inet6", "timeout", "0"); ec != 0 {
 		return fmt.Errorf(`failed to create ipset "%s": %s`, ipset6Name, s)
 	}
+
+	return nil
+}
+
+func createIptablesEntries() error {
 	if s, ec, _ := execute("iptables", "-N", chainName); ec != 0 {
 		return fmt.Errorf(`failed to create iptables chain "%s": %s`, chainName, s)
 	}
@@ -167,15 +197,34 @@ func main() {
 	}
 
 	// Create ipsets and ip(6)tables entries
-	if err := deleteIpsets(); err != nil {
+	if err := deleteIpsetsAndIptablesEntries(); err != nil {
 		log.Fatalf("failed to delete ipsets: %s", err)
 	}
-	if err := createIpsets(); err != nil {
-		log.Fatalf("failed to create ipsets: %s", err)
+	if configuration.Persistent {
+		if err := restoreIpsets(); err != nil {
+			log.Printf(`failed to restore ipsets from "%s": %s`, saveFilePath, err)
+			if err := createIpsets(); err != nil {
+				log.Fatalf("failed to create ipsets: %s", err)
+			}
+		} else {
+			log.Printf(`restored ipsets from "%s"`, saveFilePath)
+		}
+	} else {
+		if err := createIpsets(); err != nil {
+			log.Fatalf("failed to create ipsets: %s", err)
+		}
+	}
+	if err := createIptablesEntries(); err != nil {
+		log.Fatalf("failed to create ip(6)tables entries: %s", err)
 	}
 	defer func() {
-		if err := deleteIpsets(); err != nil {
-			log.Printf("failed to delete ipsets: %s", err)
+		if configuration.Persistent {
+			if err := saveIpsets(); err != nil {
+				log.Printf(`failed to save ipsets to "%s": %s`, saveFilePath, err)
+			}
+		}
+		if err := deleteIpsetsAndIptablesEntries(); err != nil {
+			log.Printf("failed to delete ipsets and ip(6)tables entries: %s", err)
 		}
 	}()
 

@@ -1,4 +1,12 @@
+# If true, additional diagnostic information
+# will be printed to stderr.
 verbose = true
+
+# If true, ipsets will be saved when gerberos is
+# terminated (unless killed by SIGKILL) and 
+# restored when gerberos starts. Timeouts will
+# be restored as saved.
+persistent = true
 
 [rules]
     [rules.apache-fuzzing]
