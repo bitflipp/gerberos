@@ -7,7 +7,7 @@ import (
 func validRule() *rule {
 	return &rule{
 		Action:      []string{"ban", "1h"},
-		Regexp:      "%host%",
+		Regexp:      []string{"%host%"},
 		Source:      []string{"file", "FILE"},
 		Occurrences: []string{"5", "10s"},
 	}
@@ -44,6 +44,9 @@ func TestInvalidRules(t *testing.T) {
 	}
 
 	ee("missing action", func(r *rule) {
+		r.Action = nil
+	})
+	ee("empty action", func(r *rule) {
 		r.Action = []string{}
 	})
 	ee("unknown action", func(r *rule) {
@@ -55,19 +58,28 @@ func TestInvalidRules(t *testing.T) {
 	ee("ban action: invalid duration parameter", func(r *rule) {
 		r.Action = []string{"ban", "1hour"}
 	})
+	ee("missing regexp", func(r *rule) {
+		r.Regexp = nil
+	})
+	ee("empty regexp", func(r *rule) {
+		r.Regexp = []string{}
+	})
 	ee("invalid host magic", func(r *rule) {
-		r.Regexp = "%chost%"
+		r.Regexp = []string{"%chost%"}
 	})
 	ee("duplicate host magic", func(r *rule) {
-		r.Regexp = "%host% %host%"
+		r.Regexp = []string{"%host% %host%"}
 	})
 	ee("syntactically incorrect regexp", func(r *rule) {
-		r.Regexp = "%host% ["
+		r.Regexp = []string{"%host% ["}
 	})
 	ee("forbidden subexpression", func(r *rule) {
-		r.Regexp = "%host% (?P<host>.*)"
+		r.Regexp = []string{"%host% (?P<host>.*)"}
 	})
 	ee("missing source", func(r *rule) {
+		r.Source = nil
+	})
+	ee("empty source", func(r *rule) {
 		r.Source = []string{}
 	})
 	ee("unknown source", func(r *rule) {

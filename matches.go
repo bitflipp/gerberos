@@ -15,29 +15,33 @@ type match struct {
 }
 
 func newMatch(r *rule, l string) (*match, error) {
-	m := r.regexp.FindStringSubmatch(l)
-	if len(m) == 0 {
-		return nil, errors.New("line does not match regular expression")
-	}
-
-	sm := make(map[string]string)
-	for i, name := range r.regexp.SubexpNames() {
-		if i != 0 && name != "" {
-			sm[name] = m[i]
+	for _, re := range r.regexp {
+		m := re.FindStringSubmatch(l)
+		if len(m) == 0 {
+			continue
 		}
-	}
-	h := sm["host"]
-	ph := net.ParseIP(h)
-	if ph == nil {
-		return nil, fmt.Errorf(`failed to parse matched host "%s"`, h)
+
+		sm := make(map[string]string)
+		for i, name := range re.SubexpNames() {
+			if i != 0 && name != "" {
+				sm[name] = m[i]
+			}
+		}
+		h := sm["host"]
+		ph := net.ParseIP(h)
+		if ph == nil {
+			return nil, fmt.Errorf(`failed to parse matched host "%s"`, h)
+		}
+
+		return &match{
+			line: l,
+			time: time.Now(),
+			host: h,
+			ipv6: ph.To4() == nil,
+		}, nil
 	}
 
-	return &match{
-		line: l,
-		time: time.Now(),
-		host: h,
-		ipv6: ph.To4() == nil,
-	}, nil
+	return nil, errors.New("line does not match any regexp")
 }
 
 func (m match) String() string {

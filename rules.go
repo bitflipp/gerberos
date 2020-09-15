@@ -52,20 +52,24 @@ func (r *occurrences) add(h string) bool {
 
 type rule struct {
 	Source      []string
-	Regexp      string
+	Regexp      []string
 	Action      []string
 	Occurrences []string
 
 	name        string
 	source      source
-	regexp      *regexp.Regexp
+	regexp      []*regexp.Regexp
 	action      action
 	occurrences *occurrences
 }
 
 func (r *rule) initializeSource() error {
-	if len(r.Source) == 0 {
+	if r.Source == nil {
 		return errors.New("missing source")
+	}
+
+	if len(r.Source) == 0 {
+		return errors.New("empty source")
 	}
 
 	switch r.Source[0] {
@@ -81,31 +85,45 @@ func (r *rule) initializeSource() error {
 }
 
 func (r *rule) initializeRegexp() error {
-	if strings.Contains(r.Regexp, "(?P<host>") {
-		return errors.New(`regexp must not contain a subexpression named "host" ("(?P<host>")`)
+	if r.Regexp == nil {
+		return errors.New("missing regexp")
 	}
 
-	if dotstarTestRegexp.MatchString(r.Regexp) {
-		log.Printf(`%s: warning: regexp contains ".*". This might match part of the host and is therefore not recommended. Use ".*?" instead`, r.name)
+	if len(r.Regexp) == 0 {
+		return errors.New("empty regexp")
 	}
 
-	if len(ipMagicRegexp.FindAllStringIndex(r.Regexp, -1)) != 1 {
-		return fmt.Errorf(`"%s" must appear exactly once in regexp`, ipMagicText)
-	}
-	re := strings.Replace(r.Regexp, ipMagicText, ipRegexpText, 1)
+	r.regexp = make([]*regexp.Regexp, 0)
+	for _, s := range r.Regexp {
+		if strings.Contains(s, "(?P<host>") {
+			return errors.New(`regexp must not contain a subexpression named "host" ("(?P<host>")`)
+		}
 
-	if e, err := regexp.Compile(re); err != nil {
-		return err
-	} else {
-		r.regexp = e
+		if dotstarTestRegexp.MatchString(s) {
+			log.Printf(`%s: warning: regexp contains ".*". This might match part of the host and is therefore not recommended. Use ".*?" instead`, r.name)
+		}
+
+		if len(ipMagicRegexp.FindAllStringIndex(s, -1)) != 1 {
+			return fmt.Errorf(`"%s" must appear exactly once in regexp`, ipMagicText)
+		}
+
+		if re, err := regexp.Compile(strings.Replace(s, ipMagicText, ipRegexpText, 1)); err != nil {
+			return err
+		} else {
+			r.regexp = append(r.regexp, re)
+		}
 	}
 
 	return nil
 }
 
 func (r *rule) initializeAction() error {
-	if len(r.Action) == 0 {
+	if r.Action == nil {
 		return errors.New("missing action")
+	}
+
+	if len(r.Action) == 0 {
+		return errors.New("empty action")
 	}
 
 	switch r.Action[0] {

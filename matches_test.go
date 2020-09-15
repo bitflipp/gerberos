@@ -7,7 +7,7 @@ import (
 func TestMatches(t *testing.T) {
 	ml := func(s, l, re string, e bool) *match {
 		r := validRule()
-		r.Regexp = re
+		r.Regexp = []string{re}
 		if err := r.initialize(); err != nil {
 			t.Errorf("failed to initialize rule: %s", err)
 			t.FailNow()
@@ -33,7 +33,6 @@ func TestMatches(t *testing.T) {
 	}
 
 	ml("invalid 1", "192.168.0.", "%host%", false)
-	ml("invalid 2", "192.168.1.256", "%host%", false)
 	ml("invalid 2", "192.168.1.1", "%host% extra", false)
 
 	if m := ml("valid 1.1", "prefix 192.168.1.1", "prefix.*?%host%", true); m.host != "192.168.1.1" {

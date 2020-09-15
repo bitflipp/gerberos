@@ -2,17 +2,17 @@ verbose = true
 
 [rules]
     [rules.apache-fuzzing]
-    # Available sources are
+    # Required. Available sources are
     # - ["file", "<path to non-directory file>"]
     # - ["systemd", "<name of systemd service>"]
     source = ["file", "/var/log/apache2/access.log"]
-    # "%host%" must appear exactly once in regexp.
-    # It will be replaced with a subexpression named
-    # "host" matching IPv4 and IPv6 addresses.
+    # Required. "%host%" must appear exactly once in
+    # each regexp. It will be replaced with a subexpression
+    # named "host" matching IPv4 and IPv6 addresses.
     # Please avoid using "x*", as this may match
     # part of the host. Use "x*?" instead.
-    regexp = "%host%.*?40(0|8) 0 \"-\" \"-\""
-    # Available actions are
+    regexp = ["%host%.*?40(0|8) 0 \"-\" \"-\""]
+    # Required. Available actions are
     # - ["ban", "<value parsable by time.ParseDuration>"]
     # - ["log"]
     action = ["ban", "1h"]
@@ -23,5 +23,5 @@ verbose = true
 
     [rules.sshd-invalid-user]
     source = ["file", "/var/log/auth.log"]
-    regexp = "Invalid user.*?%host%"
+    regexp = ["Invalid user.*?%host%"]
     action = ["ban", "24h"]
