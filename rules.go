@@ -18,7 +18,7 @@ const (
 
 var (
 	ipMagicRegexp     = regexp.MustCompile(ipMagicText)
-	ipRegexpText      = `(?P<host>(25[0-5]|2[0-4]\d|[0-1]?\d?\d)(\.(25[0-5]|2[0-4]\d|[0-1]?\d?\d)){3}|(?:[0-9a-fA-F]{1,4}:){7}[0-9a-fA-F]{1,4}|((?:[0-9A-Fa-f]{1,4}(?::[0-9A-Fa-f]{1,4})*)?)::((?:[0-9A-Fa-f]{1,4}(?::[0-9A-Fa-f]{1,4})*)?))`
+	ipRegexpText      = `(?P<host>(\d?\d?\d\.){3}\d?\d?\d|([0-9A-Fa-f]{0,4}::?){1,6}[0-9A-Fa-f]{0,4}::?[0-9A-Fa-f]{0,4})`
 	dotstarTestRegexp = regexp.MustCompile(`\.\*[^\?]`)
 )
 
@@ -107,11 +107,11 @@ func (r *rule) initializeRegexp() error {
 			return fmt.Errorf(`"%s" must appear exactly once in regexp`, ipMagicText)
 		}
 
-		if re, err := regexp.Compile(strings.Replace(s, ipMagicText, ipRegexpText, 1)); err != nil {
+		re, err := regexp.Compile(strings.Replace(s, ipMagicText, ipRegexpText, 1))
+		if err != nil {
 			return err
-		} else {
-			r.regexp = append(r.regexp, re)
 		}
+		r.regexp = append(r.regexp, re)
 	}
 
 	return nil
