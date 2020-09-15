@@ -48,24 +48,27 @@ func execute(n string, args ...string) (string, int, error) {
 
 func saveIpsets() error {
 	cmd := exec.Command("ipset", "save")
+
 	f, err := os.Create(saveFilePath)
 	if err != nil {
 		return err
 	}
 	defer f.Close()
 	cmd.Stdout = f
+
 	return cmd.Run()
 }
 
 func restoreIpsets() error {
 	cmd := exec.Command("ipset", "restore")
+
 	f, err := os.Open(saveFilePath)
 	if err != nil {
 		return err
 	}
 	defer f.Close()
 	cmd.Stdin = f
-	cmd.Stderr = os.Stdout
+
 	return cmd.Run()
 }
 
