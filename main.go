@@ -15,17 +15,16 @@ import (
 )
 
 const (
-	chainName    = "gerberos"
-	ipset4Name   = "gerberos4"
-	ipset6Name   = "gerberos6"
-	saveFilePath = "./gerberos.save"
+	chainName  = "gerberos"
+	ipset4Name = "gerberos4"
+	ipset6Name = "gerberos6"
 )
 
 var (
 	configuration struct {
-		Persistent bool
-		Verbose    bool
-		Rules      map[string]*rule
+		SaveFilePath *string
+		Verbose      bool
+		Rules        map[string]*rule
 	}
 	respawnWorkerChan = make(chan *rule, 1)
 )
@@ -49,7 +48,7 @@ func execute(n string, args ...string) (string, int, error) {
 func saveIpsets() error {
 	cmd := exec.Command("ipset", "save")
 
-	f, err := os.Create(saveFilePath)
+	f, err := os.Create(*configuration.SaveFilePath)
 	if err != nil {
 		return err
 	}
@@ -62,7 +61,7 @@ func saveIpsets() error {
 func restoreIpsets() error {
 	cmd := exec.Command("ipset", "restore")
 
-	f, err := os.Open(saveFilePath)
+	f, err := os.Open(*configuration.SaveFilePath)
 	if err != nil {
 		return err
 	}
@@ -203,16 +202,17 @@ func main() {
 	if err := deleteIpsetsAndIptablesEntries(); err != nil {
 		log.Fatalf("failed to delete ipsets: %s", err)
 	}
-	if configuration.Persistent {
+	if configuration.SaveFilePath != nil {
 		if err := restoreIpsets(); err != nil {
-			log.Printf(`failed to restore ipsets from "%s": %s`, saveFilePath, err)
+			log.Printf(`failed to restore ipsets from "%s": %s`, *configuration.SaveFilePath, err)
 			if err := createIpsets(); err != nil {
 				log.Fatalf("failed to create ipsets: %s", err)
 			}
 		} else {
-			log.Printf(`restored ipsets from "%s"`, saveFilePath)
+			log.Printf(`restored ipsets from "%s"`, *configuration.SaveFilePath)
 		}
 	} else {
+		log.Printf("warning: not persisting ipsets")
 		if err := createIpsets(); err != nil {
 			log.Fatalf("failed to create ipsets: %s", err)
 		}
@@ -221,9 +221,9 @@ func main() {
 		log.Fatalf("failed to create ip(6)tables entries: %s", err)
 	}
 	defer func() {
-		if configuration.Persistent {
+		if configuration.SaveFilePath != nil {
 			if err := saveIpsets(); err != nil {
-				log.Printf(`failed to save ipsets to "%s": %s`, saveFilePath, err)
+				log.Printf(`failed to save ipsets to "%s": %s`, *configuration.SaveFilePath, err)
 			}
 		}
 		if err := deleteIpsetsAndIptablesEntries(); err != nil {

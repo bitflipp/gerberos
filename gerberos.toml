@@ -2,11 +2,11 @@
 # will be printed to stderr.
 verbose = true
 
-# If true, ipsets will be saved when gerberos is
+# If given, ipsets will be saved when gerberos is
 # terminated (unless killed by SIGKILL) and 
 # restored when gerberos starts. Timeouts will
 # be restored as saved.
-persistent = true
+saveFilePath = "./gerberos.save"
 
 [rules]
     [rules.apache-fuzzing]
