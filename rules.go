@@ -18,7 +18,7 @@ const (
 
 var (
 	ipMagicRegexp     = regexp.MustCompile(ipMagicText)
-	ipRegexpText      = `(?P<host>(25[0-5]|2[0-4]\d|[0-1]?\d?\d)(\.(25[0-5]|2[0-4]\d|[0-1]?\d?\d)){3}|(?:[0-9a-fA-F]{1,4}:){7}[0-9a-fA-F]{1,4}|((?:[0-9A-Fa-f]{1,4}(?::[0-9A-Fa-f]{1,4})*)?)::((?:[0-9A-Fa-f]{1,4}(?::[0-9A-Fa-f]{1,4})*)?))`
+	ipRegexpText      = `(?P<host>(\d?\d?\d\.){3}\d?\d?\d|([0-9A-Fa-f]{0,4}::?){1,6}[0-9A-Fa-f]{0,4}::?[0-9A-Fa-f]{0,4})`
 	dotstarTestRegexp = regexp.MustCompile(`\.\*[^\?]`)
 )
 

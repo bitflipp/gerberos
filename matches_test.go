@@ -42,6 +42,25 @@ func TestMatches(t *testing.T) {
 		t.Errorf(`expected host "192.168.1.1", got "%s"`, m.host)
 	}
 
+	ml("invalid 4.1", "300.300.300.300", "%host%", false)
+	ml("invalid 4.2", "100.100.100", "%host%", false)
+	ml("invalid 4.3", "100..100.100.100", "%host%", false)
+	ml("invalid 4.4", "start 1000.100.100.100 end", "start %host% end", false)
+	ml("invalid 4.5", "start 100.100.100.100.100.100 end", "start %host% end", false)
+	ml("invalid 6.1", "affe:affe", "%host%", false)
+	ml("invalid 6.2", "1a:1a", "%host%", false)
+	ml("invalid 6.3", "start 3ab9:1ea0:c269:5aad:b716:c28d:237d:4d8f:3ab9:1ea0:c269:5aad:b716:c28d:237d:4d8f end", "start %host% end", false)
+
+	ml("valid 4.1", "147.144.139.204", "%host%", true)
+	ml("valid 4.2", "49.236.157.198", "%host%", true)
+	ml("valid 4.3", "1.1.1.1", "%host%", true)
+	ml("valid 4.4", "255.255.255.254", "%host%", true)
+	ml("valid 6.1", "a0ca:14f:80b2::77e6:f471:361e", "%host%", true)
+	ml("valid 6.2", "35bb:6be1:abae:de1:adbd:aecd:2813:a993", "%host%", true)
+	ml("valid 6.3", "3ab9:1ea0:c269:5aad:b716:c28d:237d:4d8f", "%host%", true)
+	ml("valid 6.4", "affe::affe", "%host%", true)
+	ml("valid 6.5", "1a::1a", "%host%", true)
+
 	em("valid 2.1", "0.0.0.0", false)
 	em("valid 2.2", "11.0.0.0", false)
 	em("valid 2.3", "129.56.0.0", false)
