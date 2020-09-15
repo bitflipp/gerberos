@@ -36,11 +36,11 @@ func execute(n string, args ...string) (string, int, error) {
 	}
 	b, err := cmd.CombinedOutput()
 	if err != nil {
-		if eerr, ok := err.(*exec.ExitError); ok && eerr != nil {
+		eerr, ok := err.(*exec.ExitError)
+		if ok && eerr != nil {
 			return string(b), eerr.ExitCode(), eerr
-		} else {
-			return "", -1, err
 		}
+		return "", -1, err
 	}
 	return string(b), 0, nil
 }
@@ -146,9 +146,8 @@ func isInstanceAlreadyRunning() (bool, error) {
 		if p == n {
 			if oc {
 				return true, nil
-			} else {
-				oc = true
 			}
+			oc = true
 		}
 	}
 

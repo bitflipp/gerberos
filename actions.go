@@ -24,11 +24,11 @@ func (a *banAction) initialize(r *rule) error {
 		return errors.New("missing duration parameter")
 	}
 
-	if d, err := time.ParseDuration(r.Action[1]); err != nil {
+	d, err := time.ParseDuration(r.Action[1])
+	if err != nil {
 		return fmt.Errorf("failed to parse duration parameter: %s", err)
-	} else {
-		a.duration = d
 	}
+	a.duration = d
 
 	return nil
 }

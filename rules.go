@@ -107,11 +107,11 @@ func (r *rule) initializeRegexp() error {
 			return fmt.Errorf(`"%s" must appear exactly once in regexp`, ipMagicText)
 		}
 
-		if re, err := regexp.Compile(strings.Replace(s, ipMagicText, ipRegexpText, 1)); err != nil {
+		re, err := regexp.Compile(strings.Replace(s, ipMagicText, ipRegexpText, 1))
+		if err != nil {
 			return err
-		} else {
-			r.regexp = append(r.regexp, re)
 		}
+		r.regexp = append(r.regexp, re)
 	}
 
 	return nil
