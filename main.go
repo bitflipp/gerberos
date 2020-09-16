@@ -65,7 +65,12 @@ func restoreIpsets() error {
 	if err != nil {
 		return err
 	}
-	defer f.Close()
+	defer func() {
+		f.Close()
+		if err := os.Remove(*configuration.SaveFilePath); err != nil {
+			log.Printf("failed to delete save file: %s", err)
+		}
+	}()
 
 	cmd := exec.Command("ipset", "restore")
 	cmd.Stdin = f
