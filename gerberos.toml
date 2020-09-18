@@ -1,5 +1,5 @@
 # If true, additional diagnostic information
-# will be printed to stderr.
+# will be printed to stdout.
 verbose = true
 
 # If given, ipsets will be saved when gerberos is
