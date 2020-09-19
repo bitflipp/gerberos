@@ -8,11 +8,11 @@ dist: clean
 	mkdir dist
 	CGO_ENABLED=0 go build -o dist/gerberos
 
-package: dist
+release: dist
 	cp gerberos.toml gerberos.service dist
 	cd dist && tar czvf gerberos.tar.gz *
 
-run: build
+run: dist
 	sudo dist/gerberos
 
 test: clean
