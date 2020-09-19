@@ -4,14 +4,16 @@ import (
 	"errors"
 	"fmt"
 	"net"
+	"regexp"
 	"time"
 )
 
 type match struct {
-	time time.Time
-	line string
-	host string
-	ipv6 bool
+	time   time.Time
+	line   string
+	host   string
+	ipv6   bool
+	regexp *regexp.Regexp
 }
 
 func newMatch(r *rule, l string) (*match, error) {
@@ -34,10 +36,11 @@ func newMatch(r *rule, l string) (*match, error) {
 		}
 
 		return &match{
-			line: l,
-			time: time.Now(),
-			host: h,
-			ipv6: ph.To4() == nil,
+			line:   l,
+			time:   time.Now(),
+			host:   h,
+			ipv6:   ph.To4() == nil,
+			regexp: re,
 		}, nil
 	}
 

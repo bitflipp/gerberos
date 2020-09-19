@@ -61,7 +61,7 @@ func (a *logAction) initialize(r *rule) error {
 }
 
 func (a *logAction) perform(m *match) error {
-	log.Printf("%s: %s", a.rule.name, m)
+	log.Printf("%s: %s (%s)", a.rule.name, m, m.regexp.String())
 
 	return nil
 }
