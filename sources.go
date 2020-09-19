@@ -28,6 +28,10 @@ func (s *fileSource) initialize(r *rule) error {
 		return fmt.Errorf(`"%s" is a directory`, s.path)
 	}
 
+	if len(r.Source) > 2 {
+		return errors.New("superfluous parameter(s)")
+	}
+
 	return nil
 }
 
@@ -48,6 +52,10 @@ func (s *systemdSource) initialize(r *rule) error {
 	}
 	s.service = r.Source[1]
 
+	if len(r.Source) > 2 {
+		return errors.New("superfluous parameter(s)")
+	}
+
 	return nil
 }
 
@@ -62,8 +70,8 @@ type kernelSource struct {
 func (k *kernelSource) initialize(r *rule) error {
 	k.rule = r
 
-	if len(r.Source) != 1 {
-		return errors.New("parameter not allowed")
+	if len(r.Source) > 1 {
+		return errors.New("superfluous parameter(s)")
 	}
 
 	return nil

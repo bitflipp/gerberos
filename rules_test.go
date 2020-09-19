@@ -91,8 +91,17 @@ func TestInvalidRules(t *testing.T) {
 	ee("file source: path is a directory", func(r *rule) {
 		r.Source = []string{"file", "/"}
 	})
+	ee("file source source: superfluous parameter", func(r *rule) {
+		r.Source = []string{"file", "file", "superfluous"}
+	})
 	ee("systemd source: missing service parameter", func(r *rule) {
 		r.Source = []string{"systemd"}
+	})
+	ee("systemd source: superfluous parameter", func(r *rule) {
+		r.Source = []string{"systemd", "service", "superfluous"}
+	})
+	ee("kernel source: superfluous parameter", func(r *rule) {
+		r.Source = []string{"kernel", "superfluous"}
 	})
 	ee("occurrences: missing count parameter", func(r *rule) {
 		r.Occurrences = []string{}
