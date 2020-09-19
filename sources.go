@@ -54,3 +54,21 @@ func (s *systemdSource) initialize(r *rule) error {
 func (s *systemdSource) matches() (chan *match, error) {
 	return s.rule.processScanner("journalctl", "-n", "0", "-f", "-u", s.service)
 }
+
+type kernelSource struct {
+	rule *rule
+}
+
+func (k *kernelSource) initialize(r *rule) error {
+	k.rule = r
+
+	if len(r.Source) != 1 {
+		return errors.New("parameter not allowed")
+	}
+
+	return nil
+}
+
+func (k *kernelSource) matches() (chan *match, error) {
+	return k.rule.processScanner("journalctl", "-kf", "-n", "0")
+}

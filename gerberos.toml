@@ -13,6 +13,7 @@ saveFilePath = "./gerberos.save"
     # Required. Available sources are
     # - ["file", "<path to non-directory file>"]
     # - ["systemd", "<name of systemd service>"]
+    # - ["kernel"] (needs journalctl)
     source = ["file", "/var/log/apache2/access.log"]
     # Required. "%host%" must appear exactly once in
     # each regexp. It will be replaced with a subexpression

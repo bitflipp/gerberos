@@ -77,6 +77,8 @@ func (r *rule) initializeSource() error {
 		r.source = &fileSource{}
 	case "systemd":
 		r.source = &systemdSource{}
+	case "kernel":
+		r.source = &kernelSource{}
 	default:
 		return errors.New("unknown source")
 	}
