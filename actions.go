@@ -30,6 +30,10 @@ func (a *banAction) initialize(r *rule) error {
 	}
 	a.duration = d
 
+	if len(r.Action) > 2 {
+		return errors.New("superfluous parameter(s)")
+	}
+
 	return nil
 }
 
@@ -51,17 +55,39 @@ func (a *banAction) perform(m *match) error {
 }
 
 type logAction struct {
-	rule *rule
+	rule     *rule
+	extended bool
 }
 
 func (a *logAction) initialize(r *rule) error {
 	a.rule = r
 
+	if len(r.Action) < 2 {
+		return errors.New("missing level parameter")
+	}
+
+	switch r.Action[1] {
+	case "simple":
+		a.extended = false
+	case "extended":
+		a.extended = true
+	default:
+		return errors.New("invalid level parameter")
+	}
+
+	if len(r.Action) > 2 {
+		return errors.New("superfluous parameter(s)")
+	}
+
 	return nil
 }
 
 func (a *logAction) perform(m *match) error {
-	log.Printf("%s: %s (%s)", a.rule.name, m, m.regexp.String())
+	s := m.StringSimple()
+	if a.extended {
+		s = m.StringExtended()
+	}
+	log.Printf("%s: %s", a.rule.name, s)
 
 	return nil
 }

@@ -11,9 +11,9 @@ saveFilePath = "./gerberos.save"
 [rules]
     [rules.apache-fuzzing]
     # Required. Available sources are
-    # - ["file", "<path to non-directory file>"]
-    # - ["systemd", "<name of systemd service>"]
-    # - ["kernel"] (needs journalctl)
+    # - ["file", "<path to non-directory file>"] (using tail)
+    # - ["systemd", "<name of systemd service>"] (using journalctl)
+    # - ["kernel"] (using journalctl)
     source = ["file", "/var/log/apache2/access.log"]
     # Required. "%host%" must appear exactly once in
     # each regexp. It will be replaced with a subexpression
@@ -23,8 +23,8 @@ saveFilePath = "./gerberos.save"
     regexp = ["%host%.*?40(0|8) 0 \"-\" \"-\""]
     # Required. Available actions are
     # - ["ban", "<value parsable by time.ParseDuration>"]
-    # - ["log"]
-    action = ["ban", "1h"]
+    # - ["log", "<simple|extended>"]
+    action = ["log", "extended"]
     # Optional. In this case, the action will be triggered
     # once the same match has occurred 5 times within 10 
     # seconds, resetting the counter.

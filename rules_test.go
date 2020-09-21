@@ -27,7 +27,7 @@ func TestValidRules(t *testing.T) {
 		r.Occurrences = nil
 	})
 	ir(func(r *rule) {
-		r.Action = []string{"log"}
+		r.Action = []string{"log", "extended"}
 	})
 	ir(func(r *rule) {
 		r.Source = []string{"systemd", "service"}
@@ -52,11 +52,23 @@ func TestInvalidRules(t *testing.T) {
 	ee("unknown action", func(r *rule) {
 		r.Action = []string{"unknown"}
 	})
+	ee("log action: missing level parameter", func(r *rule) {
+		r.Action = []string{"log"}
+	})
+	ee("log action: invalid level parameter", func(r *rule) {
+		r.Action = []string{"log", "invalid"}
+	})
+	ee("log action: superfluous parameter", func(r *rule) {
+		r.Action = []string{"log", "simple", "superfluous"}
+	})
 	ee("ban action: missing duration parameter", func(r *rule) {
 		r.Action = []string{"ban"}
 	})
 	ee("ban action: invalid duration parameter", func(r *rule) {
 		r.Action = []string{"ban", "1hour"}
+	})
+	ee("ban action: superfluous parameter", func(r *rule) {
+		r.Action = []string{"ban", "1h", "superfluous"}
 	})
 	ee("missing regexp", func(r *rule) {
 		r.Regexp = nil
