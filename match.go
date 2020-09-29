@@ -115,11 +115,13 @@ func (r *rule) matchAggregate(l string) (*match, error) {
 		go func(id string) {
 			time.Sleep(a.interval)
 			a.registryMutex.Lock()
-			defer a.registryMutex.Unlock()
 			if ip, e := a.registry[id]; e {
 				delete(a.registry, id)
-				log.Printf(`%s: removed ID "%s" with IP %s from registry`, r.name, id, ip)
+				if configuration.Verbose {
+					log.Printf(`%s: removed ID "%s" with IP %s from registry`, r.name, id, ip)
+				}
 			}
+			a.registryMutex.Unlock()
 		}(id)
 
 		return nil, errors.New("incomplete aggregate")
