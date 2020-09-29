@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"net"
 	"os/exec"
 	"regexp"
 	"strconv"
@@ -94,7 +95,9 @@ func (r *rule) initializeRegexp() error {
 			return fmt.Errorf(`"%s" must appear exactly once in regexp if the aggregate option is used`, idMagicText)
 		}
 
-		re, err := regexp.Compile(strings.Replace(s, ipMagicText, ipRegexpText, 1))
+		t := strings.Replace(s, ipMagicText, ipRegexpText, 1)
+		t = strings.Replace(t, idMagicText, idRegexpText, 1)
+		re, err := regexp.Compile(t)
 		if err != nil {
 			return err
 		}
@@ -164,10 +167,7 @@ func (r *rule) initializeAggregate() error {
 	}
 
 	r.aggregate = &aggregate{
-		registry: make(map[string]struct {
-			ip    string
-			count int
-		}, 0),
+		registry: make(map[string]net.IP, 0),
 		interval: i,
 		regexp:   res,
 	}
@@ -256,7 +256,7 @@ func (r *rule) processScanner(n string, args ...string) (chan *match, error) {
 				c <- m
 			} else {
 				if configuration.Verbose {
-					log.Printf("failed to create match: %s", err)
+					log.Printf("%s: failed to create match: %s", r.name, err)
 				}
 			}
 		}

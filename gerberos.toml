@@ -40,10 +40,10 @@ saveFilePath = "./gerberos.save"
     source = ["file", "/tmp/aggregate.log"]
     # If the aggregate option is used, "%id% must appear
     # exactly once in each regexp in addition to "%ip%".
-    regexp = ["%ip% \\(%id%\\)"]
+    regexp = ["%id% %ip%"]
     action = ["log", "extended"]
     # Optional. In this case, the given action will only be
     # performed if one of the two aggregate regexps
     # is matched with the same ID within 10 seconds.
     # "id" must appear exactly once in each regexp.
-    aggregate = ["10s", "\\(%id%\\) failed", "bonfed %id%"]
+    aggregate = ["10s", "%id% failed", "bonfed %id%"]
