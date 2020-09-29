@@ -19,7 +19,7 @@ saveFilePath = "./gerberos.save"
     # each regexp. "%ip%" will be replaced with the following
     # subexpression named "ip" matching IPv4 and IPv6 addresses:
     # (?P<ip>(\d?\d?\d\.){3}\d?\d?\d|([0-9A-Fa-f]{0,4}::?){1,6}[0-9A-Fa-f]{0,4}::?[0-9A-Fa-f]{0,4})
-    regexp = ["%ip%.*40(0|8) 0 \"-\" \"-\""]
+    regexp = ["%ip%.*\s40(0|8) 0 \"-\" \"-\""]
     # Required. Available actions are
     # - ["ban", "<value parsable by time.ParseDuration>"]
     # - ["log", "<simple|extended>"]
@@ -31,7 +31,7 @@ saveFilePath = "./gerberos.save"
 
     [rules.sshd-invalid-user]
     source = ["file", "/var/log/auth.log"]
-    regexp = ["Invalid user.*%ip%"]
+    regexp = ["Invalid user.*\s%ip%"]
     action = ["ban", "24h"]
 
     # For development only
@@ -42,7 +42,7 @@ saveFilePath = "./gerberos.save"
     # replaced with the following subexpression named "%ip":
     # (?P<id>(.*))
     # Please note that this subexpression matches greedily.
-    regexp = ["%id% %ip%"]
+    regexp = ["%id%\s%ip%"]
     action = ["log", "extended"]
     # Optional. In this case, the given action will only be
     # performed if one of the two aggregate regexps
