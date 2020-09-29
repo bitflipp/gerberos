@@ -16,7 +16,7 @@ type match struct {
 	regexp *regexp.Regexp
 }
 
-func newMatch(r *rule, l string) (*match, error) {
+func (r *rule) match(l string) (*match, error) {
 	for _, re := range r.regexp {
 		m := re.FindStringSubmatch(l)
 		if len(m) == 0 {
@@ -47,19 +47,19 @@ func newMatch(r *rule, l string) (*match, error) {
 	return nil, errors.New("line does not match any regexp")
 }
 
-func (m match) String() string {
-	return m.StringSimple()
-}
-
-func (m match) StringSimple() string {
+func (m match) stringSimple() string {
 	ipv := "IPv4"
 	if m.ipv6 {
 		ipv = "IPv6"
 	}
 
-	return fmt.Sprintf("time = %s, host = %s, %s", m.time.Format(time.RFC3339), m.host, ipv)
+	return fmt.Sprintf(`time = %s, host = "%s", %s`, m.time.Format(time.RFC3339), m.host, ipv)
 }
 
-func (m match) StringExtended() string {
-	return fmt.Sprintf("%s, line = %s, regexp = %s", m, m.line, m.regexp)
+func (m match) stringExtended() string {
+	return fmt.Sprintf(`%s, line = "%s", regexp = "%s"`, m, m.line, m.regexp)
+}
+
+func (m match) String() string {
+	return m.stringSimple()
 }

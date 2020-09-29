@@ -83,9 +83,11 @@ func (a *logAction) initialize(r *rule) error {
 }
 
 func (a *logAction) perform(m *match) error {
-	s := m.StringSimple()
+	var s string
 	if a.extended {
-		s = m.StringExtended()
+		s = m.stringExtended()
+	} else {
+		s = m.stringSimple()
 	}
 	log.Printf("%s: %s", a.rule.name, s)
 
