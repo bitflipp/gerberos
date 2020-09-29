@@ -26,12 +26,14 @@ type rule struct {
 	Source      []string
 	Regexp      []string
 	Action      []string
+	Aggregate   []string
 	Occurrences []string
 
 	name        string
 	source      source
 	regexp      []*regexp.Regexp
 	action      action
+	aggregate   *aggregate
 	occurrences *occurrences
 }
 
@@ -112,6 +114,17 @@ func (r *rule) initializeAction() error {
 	return r.action.initialize(r)
 }
 
+func (r *rule) initializeAggregate() error {
+	if r.Aggregate == nil {
+		return nil
+	}
+
+	a := &aggregate{}
+	r.aggregate = a
+
+	return nil
+}
+
 func (r *rule) initializeOccurrences() error {
 	if r.Occurrences == nil {
 		return nil
@@ -155,6 +168,10 @@ func (r *rule) initialize() error {
 	}
 
 	if err := r.initializeAction(); err != nil {
+		return err
+	}
+
+	if err := r.initializeAggregate(); err != nil {
 		return err
 	}
 
