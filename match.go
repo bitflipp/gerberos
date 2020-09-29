@@ -108,7 +108,7 @@ func (r *rule) matchAggregate(l string) (*match, error) {
 		a.registryMutex.Lock()
 		a.registry[id] = pip
 		if configuration.Verbose {
-			log.Printf(`%s: added ID "%s" to registry with IP %s`, r.name, id, pip)
+			log.Printf(`%s: added ID "%s" with IP %s to registry`, r.name, id, pip)
 		}
 		a.registryMutex.Unlock()
 
@@ -121,6 +121,8 @@ func (r *rule) matchAggregate(l string) (*match, error) {
 				log.Printf(`%s: removed ID "%s" with IP %s from registry`, r.name, id, ip)
 			}
 		}(id)
+
+		return nil, errors.New("incomplete aggregate")
 	}
 
 	return nil, errors.New("line does not match any regexp")

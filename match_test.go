@@ -54,8 +54,8 @@ func TestMatches(t *testing.T) {
 	em("valid 4.7", "129.56.0.0", false)
 	em("valid 4.8", "243.8.45.0", false)
 	em("valid 4.9", "192.168.172.14", false)
-	ml("valid 4.10", "prefix 192.168.1.1", "prefix.*?%ip%", true)
-	ml("valid 4.11", "192.168.1.1 suffix", "%ip%.*?suffix", true)
+	ml("valid 4.10", "prefixseparator192.168.1.1", "prefixseparator%ip%", true)
+	ml("valid 4.11", "192.168.1.1separatorsuffix", "%ip%separatorsuffix", true)
 
 	em("valid 6.1", "a0ca:14f:80b2::77e6:f471:361e", true)
 	em("valid 6.2", "35bb:6be1:abae:de1:adbd:aecd:2813:a993", true)

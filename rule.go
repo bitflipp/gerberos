@@ -19,11 +19,10 @@ const (
 )
 
 var (
-	ipMagicRegexp     = regexp.MustCompile(ipMagicText)
-	ipRegexpText      = `(?P<ip>(\d?\d?\d\.){3}\d?\d?\d|([0-9A-Fa-f]{0,4}::?){1,6}[0-9A-Fa-f]{0,4}::?[0-9A-Fa-f]{0,4})`
-	idMagicRegexp     = regexp.MustCompile(idMagicText)
-	idRegexpText      = `(?P<id>(.*?))`
-	dotstarTestRegexp = regexp.MustCompile(`\.\*[^\?]`)
+	ipMagicRegexp = regexp.MustCompile(ipMagicText)
+	ipRegexpText  = `(?P<ip>(\d?\d?\d\.){3}\d?\d?\d|([0-9A-Fa-f]{0,4}::?){1,6}[0-9A-Fa-f]{0,4}::?[0-9A-Fa-f]{0,4})`
+	idMagicRegexp = regexp.MustCompile(idMagicText)
+	idRegexpText  = `(?P<id>(.*))`
 )
 
 type rule struct {
@@ -81,10 +80,6 @@ func (r *rule) initializeRegexp() error {
 
 		if strings.Contains(s, "(?P<id>") {
 			return errors.New(`regexp must not contain a subexpression named "id" ("(?P<id>")`)
-		}
-
-		if dotstarTestRegexp.MatchString(s) {
-			log.Printf(`%s: warning: regexp contains ".*". This might match too greedily (e.g. part of the IP) and is therefore not recommended. Use ".*?" instead`, r.name)
 		}
 
 		if len(ipMagicRegexp.FindAllStringIndex(s, -1)) != 1 {
@@ -149,10 +144,6 @@ func (r *rule) initializeAggregate() error {
 	for _, s := range r.Aggregate[1:] {
 		if strings.Contains(s, "(?P<id>") {
 			return errors.New(`regexp must not contain a subexpression named "id" ("(?P<id>")`)
-		}
-
-		if dotstarTestRegexp.MatchString(s) {
-			log.Printf(`%s: warning: regexp contains ".*". This might match too greedily (e.g. part of the IP) and is therefore not recommended. Use ".*?" instead`, r.name)
 		}
 
 		if len(idMagicRegexp.FindAllStringIndex(s, -1)) != 1 {
