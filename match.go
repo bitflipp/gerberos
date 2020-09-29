@@ -11,8 +11,9 @@ import (
 type match struct {
 	time   time.Time
 	line   string
-	host   string
+	ip     string
 	ipv6   bool
+	id     string
 	regexp *regexp.Regexp
 }
 
@@ -29,16 +30,16 @@ func (r *rule) match(l string) (*match, error) {
 				sm[name] = m[i]
 			}
 		}
-		h := sm["host"]
+		h := sm["ip"]
 		ph := net.ParseIP(h)
 		if ph == nil {
-			return nil, fmt.Errorf(`failed to parse matched host "%s"`, h)
+			return nil, fmt.Errorf(`failed to parse matched IP "%s"`, h)
 		}
 
 		return &match{
 			line:   l,
 			time:   time.Now(),
-			host:   h,
+			ip:     h,
 			ipv6:   ph.To4() == nil,
 			regexp: re,
 		}, nil
@@ -53,7 +54,7 @@ func (m match) stringSimple() string {
 		ipv = "IPv6"
 	}
 
-	return fmt.Sprintf(`time = %s, host = "%s", %s`, m.time.Format(time.RFC3339), m.host, ipv)
+	return fmt.Sprintf(`time = %s, IP = "%s", %s`, m.time.Format(time.RFC3339), m.ip, ipv)
 }
 
 func (m match) stringExtended() string {

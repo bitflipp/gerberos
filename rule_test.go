@@ -7,8 +7,9 @@ import (
 func validRule() *rule {
 	return &rule{
 		Action:      []string{"ban", "1h"},
-		Regexp:      []string{"%host%"},
+		Regexp:      []string{"%ip% %id%"},
 		Source:      []string{"file", "FILE"},
+		Aggregate:   []string{"1m", "%id%", "%id%"},
 		Occurrences: []string{"5", "10s"},
 	}
 }
@@ -23,6 +24,9 @@ func TestValidRules(t *testing.T) {
 	}
 
 	ir(func(r *rule) {})
+	ir(func(r *rule) {
+		r.Aggregate = nil
+	})
 	ir(func(r *rule) {
 		r.Occurrences = nil
 	})
@@ -76,17 +80,23 @@ func TestInvalidRules(t *testing.T) {
 	ee("empty regexp", func(r *rule) {
 		r.Regexp = []string{}
 	})
-	ee("invalid host magic", func(r *rule) {
-		r.Regexp = []string{"%chost%"}
+	ee("invalid IP magic", func(r *rule) {
+		r.Regexp = []string{"%cip%"}
 	})
-	ee("duplicate host magic", func(r *rule) {
-		r.Regexp = []string{"%host% %host%"}
+	ee("duplicate IP magic", func(r *rule) {
+		r.Regexp = []string{"%ip% %ip%"}
+	})
+	ee("aggregate option used but no ID magic", func(r *rule) {
+		r.Regexp = []string{"%ip%"}
 	})
 	ee("syntactically incorrect regexp", func(r *rule) {
-		r.Regexp = []string{"%host% ["}
+		r.Regexp = []string{"%ip% %id% ["}
 	})
-	ee("forbidden subexpression", func(r *rule) {
-		r.Regexp = []string{"%host% (?P<host>.*)"}
+	ee(`forbidden subexpression "ip"`, func(r *rule) {
+		r.Regexp = []string{"%ip% (?P<ip>.*)"}
+	})
+	ee(`forbidden subexpression "id"`, func(r *rule) {
+		r.Regexp = []string{"%id% (?P<id>.*)"}
 	})
 	ee("missing source", func(r *rule) {
 		r.Source = nil
@@ -123,6 +133,27 @@ func TestInvalidRules(t *testing.T) {
 	})
 	ee("occurrences: invalid count parameter 2", func(r *rule) {
 		r.Occurrences = []string{"1"}
+	})
+	ee("aggregate: missing interval parameter", func(r *rule) {
+		r.Aggregate = []string{}
+	})
+	ee("aggregate: invalid interval parameter", func(r *rule) {
+		r.Aggregate = []string{"5g"}
+	})
+	ee("aggregate: missing regexp", func(r *rule) {
+		r.Aggregate = []string{"1m"}
+	})
+	ee("aggregate: missing ID magic", func(r *rule) {
+		r.Aggregate = []string{"1m", "regexp"}
+	})
+	ee(`aggregate: forbidden subexpression "id"`, func(r *rule) {
+		r.Aggregate = []string{"1m", "%id% (?P<id>.*)"}
+	})
+	ee("aggregate: duplicate ID magic", func(r *rule) {
+		r.Aggregate = []string{"1m", "%id% %id%"}
+	})
+	ee("aggregate: syntactically incorrect regexp", func(r *rule) {
+		r.Aggregate = []string{"1m", "%ip% %id% ["}
 	})
 	ee("occurrences: missing interval parameter", func(r *rule) {
 		r.Occurrences = []string{"5"}

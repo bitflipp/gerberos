@@ -13,12 +13,15 @@ import (
 )
 
 const (
-	ipMagicText = "%host%"
+	ipMagicText = "%ip%"
+	idMagicText = "%id%"
 )
 
 var (
 	ipMagicRegexp     = regexp.MustCompile(ipMagicText)
-	ipRegexpText      = `(?P<host>(\d?\d?\d\.){3}\d?\d?\d|([0-9A-Fa-f]{0,4}::?){1,6}[0-9A-Fa-f]{0,4}::?[0-9A-Fa-f]{0,4})`
+	ipRegexpText      = `(?P<ip>(\d?\d?\d\.){3}\d?\d?\d|([0-9A-Fa-f]{0,4}::?){1,6}[0-9A-Fa-f]{0,4}::?[0-9A-Fa-f]{0,4})`
+	idMagicRegexp     = regexp.MustCompile(idMagicText)
+	idRegexpText      = `(?P<id>(.*?))`
 	dotstarTestRegexp = regexp.MustCompile(`\.\*[^\?]`)
 )
 
@@ -71,16 +74,24 @@ func (r *rule) initializeRegexp() error {
 
 	r.regexp = make([]*regexp.Regexp, 0)
 	for _, s := range r.Regexp {
-		if strings.Contains(s, "(?P<host>") {
-			return errors.New(`regexp must not contain a subexpression named "host" ("(?P<host>")`)
+		if strings.Contains(s, "(?P<ip>") {
+			return errors.New(`regexp must not contain a subexpression named "ip" ("(?P<ip>")`)
+		}
+
+		if strings.Contains(s, "(?P<id>") {
+			return errors.New(`regexp must not contain a subexpression named "id" ("(?P<id>")`)
 		}
 
 		if dotstarTestRegexp.MatchString(s) {
-			log.Printf(`%s: warning: regexp contains ".*". This might match part of the host and is therefore not recommended. Use ".*?" instead`, r.name)
+			log.Printf(`%s: warning: regexp contains ".*". This might match too greedily (e.g. part of the IP) and is therefore not recommended. Use ".*?" instead`, r.name)
 		}
 
 		if len(ipMagicRegexp.FindAllStringIndex(s, -1)) != 1 {
 			return fmt.Errorf(`"%s" must appear exactly once in regexp`, ipMagicText)
+		}
+
+		if r.Aggregate != nil && len(idMagicRegexp.FindAllStringIndex(s, -1)) != 1 {
+			return fmt.Errorf(`"%s" must appear exactly once in regexp if the aggregate option is used`, idMagicText)
 		}
 
 		re, err := regexp.Compile(strings.Replace(s, ipMagicText, ipRegexpText, 1))
@@ -119,8 +130,47 @@ func (r *rule) initializeAggregate() error {
 		return nil
 	}
 
-	a := &aggregate{}
-	r.aggregate = a
+	if len(r.Aggregate) < 1 {
+		return errors.New("missing interval parameter")
+	}
+	i, err := time.ParseDuration(r.Aggregate[0])
+	if err != nil {
+		return fmt.Errorf("failed to parse interval parameter: %s", err)
+	}
+
+	if len(r.Aggregate) < 2 {
+		return errors.New("missing regexp")
+	}
+
+	res := make([]*regexp.Regexp, 0)
+	for _, s := range r.Aggregate[1:] {
+		if strings.Contains(s, "(?P<id>") {
+			return errors.New(`regexp must not contain a subexpression named "id" ("(?P<id>")`)
+		}
+
+		if dotstarTestRegexp.MatchString(s) {
+			log.Printf(`%s: warning: regexp contains ".*". This might match too greedily (e.g. part of the IP) and is therefore not recommended. Use ".*?" instead`, r.name)
+		}
+
+		if len(idMagicRegexp.FindAllStringIndex(s, -1)) != 1 {
+			return fmt.Errorf(`"%s" must appear exactly once in regexp`, idMagicRegexp)
+		}
+
+		re, err := regexp.Compile(strings.Replace(s, idMagicText, idRegexpText, 1))
+		if err != nil {
+			return err
+		}
+		res = append(res, re)
+	}
+
+	r.aggregate = &aggregate{
+		registry: make(map[string]struct {
+			ip    string
+			count int
+		}, 0),
+		interval: i,
+		regexp:   res,
+	}
 
 	return nil
 }
@@ -233,7 +283,7 @@ func (r *rule) worker() {
 	for m := range c {
 		p := true
 		if r.occurrences != nil {
-			p = r.occurrences.add(m.host)
+			p = r.occurrences.add(m.ip)
 		}
 
 		if p {
