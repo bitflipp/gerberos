@@ -46,6 +46,7 @@ saveFilePath = "./gerberos.save"
     action = ["log", "extended"]
     # Optional. In this case, the given action will only be
     # performed if one of the two aggregate regexps
-    # is matched with the same ID within 10 seconds.
+    # is matched within 10 seconds after one of the main
+    # regexps has been matched with the same ID.
     # "id" must appear exactly once in each regexp.
     aggregate = ["10s", "%id% failed", "bonfed %id%"]
