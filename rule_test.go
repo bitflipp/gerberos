@@ -7,9 +7,9 @@ import (
 func validRule() *rule {
 	return &rule{
 		Action:      []string{"ban", "1h"},
-		Regexp:      []string{"%ip% %id%"},
+		Regexp:      []string{`%ip%\s%id%`},
 		Source:      []string{"file", "FILE"},
-		Aggregate:   []string{"1m", "%id%", "%id%"},
+		Aggregate:   []string{"1s", `a\s%id%`, `%id%\sb`},
 		Occurrences: []string{"5", "10s"},
 	}
 }

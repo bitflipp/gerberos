@@ -2,8 +2,8 @@
 # will be printed to stdout.
 verbose = true
 
-# If given, ipsets will be saved when gerberos is
-# terminated (unless killed by SIGKILL) and 
+# If given, ipsets will be saved when gerberos
+# is terminated (unless killed by SIGKILL) and
 # restored when gerberos starts. Timeouts will
 # be restored as saved.
 saveFilePath = "./gerberos.save"
@@ -16,37 +16,42 @@ saveFilePath = "./gerberos.save"
     # - ["kernel"] (using journalctl)
     source = ["file", "/var/log/apache2/access.log"]
     # Required. "%ip%" must appear exactly once in
-    # each regexp. "%ip%" will be replaced with the following
-    # subexpression named "ip" matching IPv4 and IPv6 addresses:
-    # (?P<ip>(\d?\d?\d\.){3}\d?\d?\d|([0-9A-Fa-f]{0,4}::?){1,6}[0-9A-Fa-f]{0,4}::?[0-9A-Fa-f]{0,4})
-    regexp = ["%ip%.*\s40(0|8) 0 \"-\" \"-\""]
+    # each regexp (Golang flavor). "%ip%" will be
+    # replaced with the following subexpression named
+    # "ip" matching IPv4 and IPv6 addresses:
+    # (?P<ip>(\d?\d?\d\.){3}\d?\d?\d|([0-9A-Fa-f]{0,4}::?)
+    # {1,6}[0-9A-Fa-f]{0,4}::?[0-9A-Fa-f]{0,4})
+    regexp = ['%ip%.*\s40(0|8) 0 "-" "-"']
     # Required. Available actions are
     # - ["ban", "<value parsable by time.ParseDuration>"]
     # - ["log", "<simple|extended>"]
     action = ["log", "extended"]
-    # Optional. In this case, the action will be triggered
-    # once the same match has occurred 5 times within 10 
-    # seconds, resetting the counter.
+    # Optional. In this case, the action will be
+    # performed once the same match has occurred 5
+    # times within 10 seconds, resetting the counter.
     occurrences = ["5", "10s"]
 
     [rules.sshd-invalid-user]
     source = ["file", "/var/log/auth.log"]
-    regexp = ["Invalid user.*\s%ip%"]
+    regexp = ['Invalid user.*\s%ip%']
     action = ["ban", "24h"]
 
     # For development only
     [rules.aggregate-dev]
     source = ["file", "/tmp/aggregate.log"]
-    # If the aggregate option is used, "%id% must appear exactly
-    # once in each regexp in addition to "%ip%". "%ip%" will be
-    # replaced with the following subexpression named "%ip":
+    # If the aggregate option is used, "%id% must
+    # appear exactly once in each main regexp in
+    # addition to "%ip%". "%ip%" will be replaced
+    # with the following subexpression named "ip":
     # (?P<id>(.*))
-    # Please note that this subexpression matches greedily.
-    regexp = ["%id%\s%ip%"]
+    # Please note that this subexpression matches 
+    # greedily.
+    regexp = ['%id%\s%ip%']
     action = ["log", "extended"]
-    # Optional. In this case, the given action will only be
-    # performed if one of the two aggregate regexps
-    # is matched within 10 seconds after one of the main
-    # regexps has been matched with the same ID.
-    # "id" must appear exactly once in each regexp.
-    aggregate = ["10s", "%id% failed", "bonfed %id%"]
+    # Optional. In this case, the given action will
+    # only be performed if one of the two aggregate
+    # regexps is matched within 10 seconds after one
+    # of the main regexps has been matched with the
+    # same ID. "id" must appear exactly once in each
+    # aggregate regexp.
+    aggregate = ["10s", '%id% failed', 'bonfed %id%']
