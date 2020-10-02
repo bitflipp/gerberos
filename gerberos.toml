@@ -36,9 +36,10 @@ saveFilePath = "./gerberos.save"
     regexp = ['Invalid user.*\s%ip%']
     action = ["ban", "24h"]
 
-    # For development only
-    [rules.aggregate-dev]
-    source = ["file", "/tmp/aggregate.log"]
+    # Example aggregate rule for radicale.
+    # Needs logging -> level = info
+    [rules.radicale]
+    source = ["systemd", "radicale"]
     # If the aggregate option is used, "%id% must
     # appear exactly once in each main regexp in
     # addition to "%ip%". "%ip%" will be replaced
@@ -46,12 +47,13 @@ saveFilePath = "./gerberos.save"
     # (?P<id>(.*))
     # Please note that this subexpression matches 
     # greedily.
-    regexp = ['%id%\s%ip%']
-    action = ["log", "extended"]
+    regexp = ["\\] \\[%id%\\] \\[INFO\\] .*? received from '%ip%'"]
+    action = ["log", "simple"]
     # Optional. In this case, the given action will
     # only be performed if one of the two aggregate
     # regexps is matched within 10 seconds after one
     # of the main regexps has been matched with the
     # same ID. "id" must appear exactly once in each
     # aggregate regexp.
-    aggregate = ["10s", '%id% failed', 'bonfed %id%']
+    aggregate = ["2m", "\\] \\[%id%\\] \\[INFO\\] Failed login attempt"]
+    occurrences = ["3", "5m"]
