@@ -252,7 +252,12 @@ func (r *rule) processScanner(n string, args ...string) (chan *match, error) {
 			}
 		}
 		close(c)
-		cmd.Wait()
+		if err = sc.Err(); err != nil {
+			log.Printf(`%s: error while scanning command "%s": %s`, r.name, cmd, err.Error())
+		}
+		if err = cmd.Wait(); err != nil {
+			log.Printf(`%s: error while executing command "%s": %s`, r.name, cmd, err.Error())
+		}
 	}()
 	go func() {
 		sc := bufio.NewScanner(e)

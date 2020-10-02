@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"flag"
 	"fmt"
 	"log"
@@ -172,12 +173,21 @@ func main() {
 
 	// Check privileges
 	if _, _, err := execute("ipset", "list"); err != nil {
+		if errors.Is(err, exec.ErrNotFound) {
+			log.Fatalf("ipset: command not found")
+		}
 		log.Fatalf("ipset: insufficient privileges")
 	}
 	if _, _, err := execute("iptables", "-L"); err != nil {
+		if errors.Is(err, exec.ErrNotFound) {
+			log.Fatalf("iptables: command not found")
+		}
 		log.Fatalf("iptables: insufficient privileges")
 	}
 	if _, _, err := execute("ip6tables", "-L"); err != nil {
+		if errors.Is(err, exec.ErrNotFound) {
+			log.Fatalf("ip6tables: command not found")
+		}
 		log.Fatalf("ip6tables: insufficient privileges")
 	}
 
