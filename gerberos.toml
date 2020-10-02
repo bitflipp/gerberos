@@ -16,7 +16,7 @@ saveFilePath = "./gerberos.save"
     # - ["kernel"] (using journalctl)
     source = ["file", "/var/log/apache2/access.log"]
     # Required. "%ip%" must appear exactly once in
-    # each regexp (Golang flavor). "%ip%" will be
+    # each main regexp (Golang flavor). "%ip%" will be
     # replaced with the following subexpression named
     # "ip" matching IPv4 and IPv6 addresses:
     # (?P<ip>(\d?\d?\d\.){3}\d?\d?\d|([0-9A-Fa-f]{0,4}::?)
@@ -37,7 +37,7 @@ saveFilePath = "./gerberos.save"
     action = ["ban", "24h"]
 
     # Example aggregate rule for radicale.
-    # Needs logging -> level = info
+    # Needs radicale logging -> level = info.
     [rules.radicale]
     source = ["systemd", "radicale"]
     # If the aggregate option is used, "%id% must
@@ -55,5 +55,5 @@ saveFilePath = "./gerberos.save"
     # of the main regexps has been matched with the
     # same ID. "id" must appear exactly once in each
     # aggregate regexp.
-    aggregate = ["2m", "\\] \\[%id%\\] \\[INFO\\] Failed login attempt"]
+    aggregate = ["2m", '\] \[%id%\] \[INFO\] Failed login attempt']
     occurrences = ["3", "5m"]
