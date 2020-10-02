@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"net"
 	"os/exec"
 	"regexp"
 	"strconv"
@@ -13,25 +14,29 @@ import (
 )
 
 const (
-	ipMagicText = "%host%"
+	ipMagicText = "%ip%"
+	idMagicText = "%id%"
 )
 
 var (
-	ipMagicRegexp     = regexp.MustCompile(ipMagicText)
-	ipRegexpText      = `(?P<host>(\d?\d?\d\.){3}\d?\d?\d|([0-9A-Fa-f]{0,4}::?){1,6}[0-9A-Fa-f]{0,4}::?[0-9A-Fa-f]{0,4})`
-	dotstarTestRegexp = regexp.MustCompile(`\.\*[^\?]`)
+	ipMagicRegexp = regexp.MustCompile(ipMagicText)
+	ipRegexpText  = `(?P<ip>(\d?\d?\d\.){3}\d?\d?\d|([0-9A-Fa-f]{0,4}::?){1,6}[0-9A-Fa-f]{0,4}::?[0-9A-Fa-f]{0,4})`
+	idMagicRegexp = regexp.MustCompile(idMagicText)
+	idRegexpText  = `(?P<id>(.*))`
 )
 
 type rule struct {
 	Source      []string
 	Regexp      []string
 	Action      []string
+	Aggregate   []string
 	Occurrences []string
 
 	name        string
 	source      source
 	regexp      []*regexp.Regexp
 	action      action
+	aggregate   *aggregate
 	occurrences *occurrences
 }
 
@@ -69,19 +74,25 @@ func (r *rule) initializeRegexp() error {
 
 	r.regexp = make([]*regexp.Regexp, 0)
 	for _, s := range r.Regexp {
-		if strings.Contains(s, "(?P<host>") {
-			return errors.New(`regexp must not contain a subexpression named "host" ("(?P<host>")`)
+		if strings.Contains(s, "(?P<ip>") {
+			return errors.New(`regexp must not contain a subexpression named "ip" ("(?P<ip>")`)
 		}
 
-		if dotstarTestRegexp.MatchString(s) {
-			log.Printf(`%s: warning: regexp contains ".*". This might match part of the host and is therefore not recommended. Use ".*?" instead`, r.name)
+		if strings.Contains(s, "(?P<id>") {
+			return errors.New(`regexp must not contain a subexpression named "id" ("(?P<id>")`)
 		}
 
 		if len(ipMagicRegexp.FindAllStringIndex(s, -1)) != 1 {
 			return fmt.Errorf(`"%s" must appear exactly once in regexp`, ipMagicText)
 		}
 
-		re, err := regexp.Compile(strings.Replace(s, ipMagicText, ipRegexpText, 1))
+		if r.Aggregate != nil && len(idMagicRegexp.FindAllStringIndex(s, -1)) != 1 {
+			return fmt.Errorf(`"%s" must appear exactly once in regexp if the aggregate option is used`, idMagicText)
+		}
+
+		t := strings.Replace(s, ipMagicText, ipRegexpText, 1)
+		t = strings.Replace(t, idMagicText, idRegexpText, 1)
+		re, err := regexp.Compile(t)
 		if err != nil {
 			return err
 		}
@@ -110,6 +121,49 @@ func (r *rule) initializeAction() error {
 	}
 
 	return r.action.initialize(r)
+}
+
+func (r *rule) initializeAggregate() error {
+	if r.Aggregate == nil {
+		return nil
+	}
+
+	if len(r.Aggregate) < 1 {
+		return errors.New("missing interval parameter")
+	}
+	i, err := time.ParseDuration(r.Aggregate[0])
+	if err != nil {
+		return fmt.Errorf("failed to parse interval parameter: %s", err)
+	}
+
+	if len(r.Aggregate) < 2 {
+		return errors.New("missing regexp")
+	}
+
+	res := make([]*regexp.Regexp, 0)
+	for _, s := range r.Aggregate[1:] {
+		if strings.Contains(s, "(?P<id>") {
+			return errors.New(`regexp must not contain a subexpression named "id" ("(?P<id>")`)
+		}
+
+		if len(idMagicRegexp.FindAllStringIndex(s, -1)) != 1 {
+			return fmt.Errorf(`"%s" must appear exactly once in regexp`, idMagicRegexp)
+		}
+
+		re, err := regexp.Compile(strings.Replace(s, idMagicText, idRegexpText, 1))
+		if err != nil {
+			return err
+		}
+		res = append(res, re)
+	}
+
+	r.aggregate = &aggregate{
+		registry: make(map[string]net.IP, 0),
+		interval: i,
+		regexp:   res,
+	}
+
+	return nil
 }
 
 func (r *rule) initializeOccurrences() error {
@@ -158,6 +212,10 @@ func (r *rule) initialize() error {
 		return err
 	}
 
+	if err := r.initializeAggregate(); err != nil {
+		return err
+	}
+
 	if err := r.initializeOccurrences(); err != nil {
 		return err
 	}
@@ -189,7 +247,7 @@ func (r *rule) processScanner(n string, args ...string) (chan *match, error) {
 				c <- m
 			} else {
 				if configuration.Verbose {
-					log.Printf("failed to create match: %s", err)
+					log.Printf("%s: failed to create match: %s", r.name, err)
 				}
 			}
 		}
@@ -216,7 +274,7 @@ func (r *rule) worker() {
 	for m := range c {
 		p := true
 		if r.occurrences != nil {
-			p = r.occurrences.add(m.host)
+			p = r.occurrences.add(m.ip)
 		}
 
 		if p {
