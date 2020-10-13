@@ -16,6 +16,7 @@ import (
 )
 
 const (
+	version    = "v2.0.1"
 	chainName  = "gerberos"
 	ipset4Name = "gerberos4"
 	ipset6Name = "gerberos6"
@@ -171,6 +172,8 @@ func main() {
 	// Logging
 	log.SetFlags(0)
 
+	log.Printf("gerberos %s", version)
+
 	// Check privileges
 	if _, _, err := execute("ipset", "list"); err != nil {
 		if errors.Is(err, exec.ErrNotFound) {
@@ -211,7 +214,7 @@ func main() {
 		log.Fatalf("failed to check for an already running instance: %s", err)
 	}
 	if r {
-		log.Fatalf("an instance of gerberos is already running")
+		log.Fatalf("an instance is already running")
 	}
 
 	// Initialize ipsets and ip(6)tables entries
