@@ -6,6 +6,7 @@ import (
 	"log"
 	"net"
 	"regexp"
+	"strings"
 	"time"
 )
 
@@ -32,6 +33,7 @@ func (r *rule) matchSimple(l string) (*match, error) {
 			}
 		}
 		h := sm["ip"]
+		h = strings.Trim(h, "[]")
 		ph := net.ParseIP(h)
 		if ph == nil {
 			return nil, fmt.Errorf(`failed to parse matched IP "%s"`, h)
@@ -95,6 +97,7 @@ func (r *rule) matchAggregate(l string) (*match, error) {
 			}
 		}
 		h := sm["ip"]
+		h = strings.Trim(h, "[]")
 		pip := net.ParseIP(h)
 		if pip == nil {
 			return nil, fmt.Errorf(`failed to parse matched IP "%s"`, h)

@@ -20,7 +20,7 @@ const (
 
 var (
 	ipMagicRegexp = regexp.MustCompile(ipMagicText)
-	ipRegexpText  = `(?P<ip>(\d?\d?\d\.){3}\d?\d?\d|([0-9A-Fa-f]{0,4}::?){1,6}[0-9A-Fa-f]{0,4}::?[0-9A-Fa-f]{0,4})`
+	ipRegexpText  = `(?P<ip>(\d?\d?\d\.){3}\d?\d?\d|\[?([0-9A-Fa-f]{0,4}::?){1,6}[0-9A-Fa-f]{0,4}::?[0-9A-Fa-f]{0,4})\]?`
 	idMagicRegexp = regexp.MustCompile(idMagicText)
 	idRegexpText  = `(?P<id>(.*))`
 )

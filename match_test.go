@@ -100,4 +100,11 @@ func TestMatches(t *testing.T) {
 	em("valid 6.8", "::1", true)
 	mla("valid 6.9", true, "::1 id", "a id")
 	mla("valid 6.10", true, "::1 id", "id b")
+
+	ml("valid [6.1]", "a %ip% b", true, "a [1200:0000:AB00:1234:0000:2552:7777:1313] b")
+	ml("valid [6.2]", "a %ip% b", true, "a [affe::affe] b")
+	ml("valid [6.3]", "a %ip% b", true, "a [::1] b")
+	ml("invalid [6.1]", "a %ip% b", false, "a [affe:affe] b")
+	ml("invalid [6.2]", "a %ip% b", false, "a [1a:1a] b")
+	ml("invalid [6.3]", "a %ip% b", false, "a [3ab9:1ea0:c269:5aad:b716:c28d:237d:4d8f:3ab9:1ea0:c269:5aad:b716:c28d:237d:4d8f] b")
 }

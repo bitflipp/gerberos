@@ -16,7 +16,7 @@ import (
 )
 
 const (
-	version    = "v2.0.1"
+	version    = "2.1"
 	chainName  = "gerberos"
 	ipset4Name = "gerberos4"
 	ipset6Name = "gerberos6"
