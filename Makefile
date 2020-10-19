@@ -9,7 +9,7 @@ dist: clean
 	CGO_ENABLED=0 go build -o dist/gerberos
 
 release: dist
-	cp -r licenses gerberos.toml gerberos.service dist
+	cp -r licenses-third-party gerberos.toml gerberos.service LICENSE dist
 	cd dist && tar czvf gerberos.tar.gz *
 
 run: dist
