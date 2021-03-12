@@ -59,7 +59,18 @@ func saveIpsets() error {
 	cmd := exec.Command("ipset", "save")
 	cmd.Stdout = f
 
-	return cmd.Run()
+	err = cmd.Run()
+	if err != nil {
+		return err
+	}
+
+	// Always ensure file is saved to disc. This should prevent loss of banned ips.
+	err = f.Sync()
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func restoreIpsets() error {
