@@ -64,7 +64,7 @@ func saveIpsets() error {
 		return err
 	}
 
-	// Always ensure file is saved to disc. This should prevent loss of banned ips.
+	// Always ensure file is saved to disk. This should prevent loss of banned IPs.
 	err = f.Sync()
 	if err != nil {
 		return err

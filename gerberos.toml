@@ -53,7 +53,7 @@ saveFilePath = "./gerberos.save"
     # only be performed if the aggregate regexp
     # (multiple are allowed) is matched within 2
     # minutes after one of the main regexps has been
-    # matched with the same ID. "id" must appear exactly
+    # matched with the same ID. "%id%" must appear exactly
     # once in each aggregate regexp.
     aggregate = ["2m", '\] \[%id%\] \[INFO\] Failed login attempt']
     occurrences = ["3", "5m"]
