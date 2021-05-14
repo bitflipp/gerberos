@@ -158,7 +158,7 @@ func (r *rule) initializeAggregate() error {
 	}
 
 	r.aggregate = &aggregate{
-		registry: make(map[string]net.IP, 0),
+		registry: make(map[string]net.IP),
 		interval: i,
 		regexp:   res,
 	}
@@ -191,7 +191,7 @@ func (r *rule) initializeOccurrences() error {
 	}
 
 	r.occurrences = &occurrences{
-		registry: make(map[string][]time.Time, 0),
+		registry: make(map[string][]time.Time),
 		interval: i,
 		count:    c,
 	}

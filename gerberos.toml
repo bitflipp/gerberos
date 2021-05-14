@@ -1,3 +1,6 @@
+# Backend to use, choice of ["ipset"].
+backend = "ipset"
+
 # If true, additional diagnostic information
 # will be printed to stdout.
 verbose = true

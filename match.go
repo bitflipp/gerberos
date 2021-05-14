@@ -15,7 +15,6 @@ type match struct {
 	line   string
 	ip     string
 	ipv6   bool
-	id     string
 	regexp *regexp.Regexp
 }
 

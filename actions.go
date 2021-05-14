@@ -38,20 +38,7 @@ func (a *banAction) initialize(r *rule) error {
 }
 
 func (a *banAction) perform(m *match) error {
-	s := ipset4Name
-	if m.ipv6 {
-		s = ipset6Name
-	}
-	d := int64(a.duration.Seconds())
-	if _, _, err := execute("ipset", "test", s, m.ip); err != nil {
-		if _, _, err := execute("ipset", "add", s, m.ip, "timeout", fmt.Sprint(d)); err != nil {
-			log.Printf(`%s: failed to add "%s" to ipset "%s" with %d second(s) timeout: %s`, a.rule.name, m.ip, s, d, err)
-		} else {
-			log.Printf(`%s: added "%s" to ipset "%s" with %d second(s) timeout`, a.rule.name, m.ip, s, d)
-		}
-	}
-
-	return nil
+	return backend.Ban(a.rule, m.ip, m.ipv6, a.duration)
 }
 
 type logAction struct {
