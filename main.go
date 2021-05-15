@@ -24,7 +24,7 @@ var (
 		Verbose      bool
 		Rules        map[string]*rule
 	}
-	backend           backendInterface
+	activeBackend     backend
 	respawnWorkerChan = make(chan *rule, 1)
 )
 
@@ -103,15 +103,17 @@ func main() {
 	// Initialize backend
 	switch configuration.Backend {
 	case "ipset":
-		backend = &ipsetBackend{}
+		activeBackend = &ipsetBackend{}
+	case "nft":
+		activeBackend = &nftBackend{}
 	default:
 		log.Fatalf("unknown backend: %s", configuration.Backend)
 	}
-	if err := backend.Initialize(); err != nil {
+	if err := activeBackend.Initialize(); err != nil {
 		log.Fatalf("failed to initialize backend: %s", err)
 	}
 	defer func() {
-		if err := backend.Finalize(); err != nil {
+		if err := activeBackend.Finalize(); err != nil {
 			log.Printf("failed to finalize backend: %s", err)
 		}
 	}()

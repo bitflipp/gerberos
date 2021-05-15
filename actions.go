@@ -26,7 +26,7 @@ func (a *banAction) initialize(r *rule) error {
 
 	d, err := time.ParseDuration(r.Action[1])
 	if err != nil {
-		return fmt.Errorf("failed to parse duration parameter: %s", err)
+		return fmt.Errorf("failed to parse duration parameter: %w", err)
 	}
 	a.duration = d
 
@@ -38,7 +38,7 @@ func (a *banAction) initialize(r *rule) error {
 }
 
 func (a *banAction) perform(m *match) error {
-	return backend.Ban(a.rule, m.ip, m.ipv6, a.duration)
+	return activeBackend.Ban(m.ip, m.ipv6, a.duration)
 }
 
 type logAction struct {

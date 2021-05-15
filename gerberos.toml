@@ -1,4 +1,4 @@
-# Backend to use, choice of ["ipset"].
+# Backend to use, choice of ["ipset", "nft"].
 backend = "ipset"
 
 # If true, additional diagnostic information
