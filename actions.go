@@ -38,7 +38,14 @@ func (a *banAction) initialize(r *rule) error {
 }
 
 func (a *banAction) perform(m *match) error {
-	return activeBackend.Ban(m.ip, m.ipv6, a.duration)
+	err := activeBackend.Ban(m.ip, m.ipv6, a.duration)
+	if err != nil {
+		log.Printf(`%s: failed to ban IP %s: %s`, a.rule.name, m.ip, err)
+	} else {
+		log.Printf(`%s: banned IP %s for %s`, a.rule.name, m.ip, a.duration)
+	}
+
+	return err
 }
 
 type logAction struct {
