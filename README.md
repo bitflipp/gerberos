@@ -2,7 +2,7 @@
 
 gerberos scans sources for lines matching regular expressions and containing IPv4 or IPv6 addresses and performs actions on those addresses.
 Possible sources are (not necessarily existant) non-directory files and systemd journals.
-Addresses can be logged or added to ipsets (`gerberos4` and `gerberos6`) that gerberos will manage autonomously.
+Addresses can be logged or added to ipsets or nftables that gerberos will manage autonomously.
 
 Minimal additional logic is applied. This is to adhere to the [Unix philosophy](https://en.wikipedia.org/wiki/Unix_philosophy), but impacts gerberos' out-of-the-box usefulness for specific use cases when compared to tools like [fail2ban](https://github.com/fail2ban/fail2ban).
 
