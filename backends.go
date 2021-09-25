@@ -6,6 +6,7 @@ import (
 	"log"
 	"os"
 	"os/exec"
+	"strings"
 	"time"
 )
 
@@ -302,11 +303,19 @@ func (b *nftBackend) Ban(ip string, ipv6 bool, d time.Duration) error {
 	ds := int64(d.Seconds())
 
 	if ipv6 {
-		if _, _, err := execute("nft", "add", "element", "ip6", b.table6Name, b.set6Name, fmt.Sprintf("{ %s timeout %ds }", ip, ds)); err != nil {
+		if output, ecode, err := execute("nft", "add", "element", "ip6", b.table6Name, b.set6Name, fmt.Sprintf("{ %s timeout %ds }", ip, ds)); err != nil {
+			if ecode == 1 && strings.Contains(output, "File exists") {
+				// This ip is probably already in set. Ignore the error.
+				return nil
+			}
 			return fmt.Errorf(`failed to add element to set "%s": %w`, b.set6Name, err)
 		}
 	} else {
-		if _, _, err := execute("nft", "add", "element", "ip", b.table4Name, b.set4Name, fmt.Sprintf("{ %s timeout %ds }", ip, ds)); err != nil {
+		if output, ecode, err := execute("nft", "add", "element", "ip", b.table4Name, b.set4Name, fmt.Sprintf("{ %s timeout %ds }", ip, ds)); err != nil {
+			if ecode == 1 && strings.Contains(output, "File exists") {
+				// This ip is probably already in set. Ignore the error.
+				return nil
+			}
 			return fmt.Errorf(`failed to add element to set "%s": %w`, b.set4Name, err)
 		}
 	}
