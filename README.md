@@ -18,7 +18,7 @@ Minimal additional logic is applied. This is to adhere to the [Unix philosophy](
 
 ### nft backend
 
-- nftables v1.0.0
+- nftables v0.9.3 (tested on Ubuntu 20.04)
 
 ## Build
 
