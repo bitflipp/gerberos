@@ -6,7 +6,6 @@ import (
 	"log"
 	"os"
 	"os/exec"
-	"strings"
 	"time"
 )
 
@@ -127,23 +126,23 @@ func (b *ipsetBackend) Initialize() error {
 	b.ipset6Name = "gerberos6"
 
 	// Check privileges
-	if _, _, err := execute("ipset", "list"); err != nil {
+	if s, _, err := execute("ipset", "list"); err != nil {
 		if errors.Is(err, exec.ErrNotFound) {
 			return errors.New("ipset: command not found")
 		}
-		return errors.New("ipset: insufficient privileges")
+		return fmt.Errorf("ipset: insufficient privileges: %s", s)
 	}
-	if _, _, err := execute("iptables", "-L"); err != nil {
+	if s, _, err := execute("iptables", "-L"); err != nil {
 		if errors.Is(err, exec.ErrNotFound) {
 			return errors.New("iptables: command not found")
 		}
-		return errors.New("iptables: insufficient privileges")
+		return fmt.Errorf("iptables: insufficient privileges: %s", s)
 	}
-	if _, _, err := execute("ip6tables", "-L"); err != nil {
+	if s, _, err := execute("ip6tables", "-L"); err != nil {
 		if errors.Is(err, exec.ErrNotFound) {
 			return errors.New("ip6tables: command not found")
 		}
-		return errors.New("ip6tables: insufficient privileges")
+		return fmt.Errorf("ip6tables: insufficient privileges: %s", s)
 	}
 
 	// Initialize ipsets and ip(6)tables entries
@@ -275,11 +274,11 @@ func (b *nftBackend) Initialize() error {
 	b.set6Name = "set6"
 
 	// Check privileges
-	if _, _, err := execute("nft", "list", "ruleset"); err != nil {
+	if s, _, err := execute("nft", "list", "ruleset"); err != nil {
 		if errors.Is(err, exec.ErrNotFound) {
 			return errors.New("nft: command not found")
 		}
-		return errors.New("nft: insufficient privileges")
+		return fmt.Errorf("nft: insufficient privileges: %s", s)
 	}
 
 	if err := b.createTables(); err != nil {
@@ -303,20 +302,22 @@ func (b *nftBackend) Ban(ip string, ipv6 bool, d time.Duration) error {
 	ds := int64(d.Seconds())
 
 	if ipv6 {
-		if output, ecode, err := execute("nft", "add", "element", "ip6", b.table6Name, b.set6Name, fmt.Sprintf("{ %s timeout %ds }", ip, ds)); err != nil {
-			if ecode == 1 && strings.Contains(output, "File exists") {
+		if s, ec, err := execute("nft", "add", "element", "ip6", b.table6Name, b.set6Name, fmt.Sprintf("{ %s timeout %ds }", ip, ds)); err != nil {
+			if ec == 1 {
 				// This ip is probably already in set. Ignore the error.
+				// on netfilters >= 1.0.0, this shouldn't be a problem any more. However, since Ubuntu 20.04. only has v0.9.3, this is needed
 				return nil
 			}
-			return fmt.Errorf(`failed to add element to set "%s": %w`, b.set6Name, err)
+			return fmt.Errorf(`failed to add element to set "%s": %s`, b.set6Name, s)
 		}
 	} else {
-		if output, ecode, err := execute("nft", "add", "element", "ip", b.table4Name, b.set4Name, fmt.Sprintf("{ %s timeout %ds }", ip, ds)); err != nil {
-			if ecode == 1 && strings.Contains(output, "File exists") {
+		if s, ec, err := execute("nft", "add", "element", "ip", b.table4Name, b.set4Name, fmt.Sprintf("{ %s timeout %ds }", ip, ds)); err != nil {
+			if ec == 1 {
 				// This ip is probably already in set. Ignore the error.
+				// on netfilters >= 1.0.0, this shouldn't be a problem any more. However, since Ubuntu 20.04. only has v0.9.3, this is needed
 				return nil
 			}
-			return fmt.Errorf(`failed to add element to set "%s": %w`, b.set4Name, err)
+			return fmt.Errorf(`failed to add element to set "%s": %s`, b.set4Name, s)
 		}
 	}
 
