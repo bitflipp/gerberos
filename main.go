@@ -102,6 +102,8 @@ func main() {
 
 	// Initialize backend
 	switch configuration.Backend {
+	case "":
+		log.Fatalf("no backend configuration found (is it missing?) - please choose one of the available backends")
 	case "ipset":
 		activeBackend = &ipsetBackend{}
 	case "nft":
