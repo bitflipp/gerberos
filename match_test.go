@@ -1,24 +1,27 @@
 package main
 
 import (
+	"regexp"
 	"testing"
+	"time"
 )
 
 func TestMatches(t *testing.T) {
+	rn, err := newTestRunner()
+	testNoError(t, err)
+
 	// Simple match
 	ml := func(s, re string, e bool, l string) *match {
-		r := validRule()
+		r := newTestValidRule()
 		r.Aggregate = nil
 		r.Regexp = []string{re}
-		if err := r.initialize(); err != nil {
+		if err := r.initialize(rn); err != nil {
 			t.Errorf("%s: failed to initialize rule", err)
-			t.FailNow()
 		}
 
 		m, err := r.match(l)
 		if e != (err == nil) {
 			t.Errorf(`%s: unexpected result`, s)
-			t.FailNow()
 		}
 
 		return m
@@ -26,11 +29,10 @@ func TestMatches(t *testing.T) {
 
 	// Aggregate match
 	mla := func(s string, e bool, ls ...string) *match {
-		r := validRule()
+		r := newTestValidRule()
 
-		if err := r.initialize(); err != nil {
+		if err := r.initialize(rn); err != nil {
 			t.Errorf("%s: failed to initialize rule", err)
-			t.FailNow()
 		}
 
 		for i, l := range ls {
@@ -38,7 +40,6 @@ func TestMatches(t *testing.T) {
 			if i == len(ls)-1 {
 				if e != (err == nil) {
 					t.Errorf(`%s: unexpected result`, s)
-					t.FailNow()
 				}
 				return m
 			}
@@ -68,6 +69,7 @@ func TestMatches(t *testing.T) {
 	mla("invalid 4.8", false, "192.168.1.1 id")
 	mla("invalid 4.9", false, "192.168.1.1 id", "192.168.1.1 id")
 	mla("invalid 4.10", false, "192.168.1.1 id", "id c")
+	mla("invalid 4.11", false, "192.168.1.1 id", "id b", "i b")
 
 	ml("invalid 6.1", "%ip%", false, "affe:affe")
 	ml("invalid 6.2", "%ip%", false, "1a:1a")
@@ -88,7 +90,7 @@ func TestMatches(t *testing.T) {
 	ml("valid 4.10", "prefixseparator%ip%", true, "prefixseparator192.168.1.1")
 	ml("valid 4.11", "%ip%separatorsuffix", true, "192.168.1.1separatorsuffix")
 	mla("valid 4.12", true, "192.168.1.1 id", "a id")
-	mla("valid 4.12", true, "192.168.1.1 id", "id b")
+	mla("valid 4.13", true, "192.168.1.1 id", "id b")
 
 	em("valid 6.1", "a0ca:14f:80b2::77e6:f471:361e", true)
 	em("valid 6.2", "35bb:6be1:abae:de1:adbd:aecd:2813:a993", true)
@@ -107,4 +109,46 @@ func TestMatches(t *testing.T) {
 	ml("invalid [6.1]", "a %ip% b", false, "a [affe:affe] b")
 	ml("invalid [6.2]", "a %ip% b", false, "a [1a:1a] b")
 	ml("invalid [6.3]", "a %ip% b", false, "a [3ab9:1ea0:c269:5aad:b716:c28d:237d:4d8f:3ab9:1ea0:c269:5aad:b716:c28d:237d:4d8f] b")
+}
+
+func TestMatchesStringer(t *testing.T) {
+	m := &match{
+		time:   time.Time{},
+		line:   "line",
+		ip:     "123.123.123.123",
+		ipv6:   false,
+		regexp: regexp.MustCompile("regexp"),
+	}
+
+	ess := `time = 0001-01-01T00:00:00Z, IP = "123.123.123.123", IPv4`
+	gss := m.stringSimple()
+	if gss != ess {
+		t.Errorf(`expected: "%s", got "%s"`, ess, gss)
+	}
+
+	ese := `time = 0001-01-01T00:00:00Z, IP = "123.123.123.123", IPv4, line = "line", regexp = "regexp"`
+	gse := m.stringExtended()
+	if gss != ess {
+		t.Errorf(`expected: "%s", got "%s"`, ese, gse)
+	}
+
+	es := m.stringSimple()
+	gs := m.String()
+	if gss != ess {
+		t.Errorf(`expected: "%s", got "%s"`, es, gs)
+	}
+
+	m6 := &match{
+		time:   time.Time{},
+		line:   "line",
+		ip:     "1:5ee:bad:c0de",
+		ipv6:   true,
+		regexp: regexp.MustCompile("regexp"),
+	}
+
+	ese6 := `time = 0001-01-01T00:00:00Z, IP = "1:5ee:bad:c0de", IPv6, line = "line", regexp = "regexp"`
+	gse6 := m6.stringExtended()
+	if ese6 != gse6 {
+		t.Errorf(`expected: "%s", got "%s"`, ese6, gse6)
+	}
 }

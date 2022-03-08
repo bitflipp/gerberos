@@ -1,0 +1,12 @@
+#!/bin/bash
+
+echo "id 123.123.123.123"
+echo "id 123.123.123.123"
+echo "id affe::affe"
+echo "id affe::affe"
+echo "id 123.123.123.123"
+echo "id 123.123.123.123"
+echo "id affe::affe"
+echo "id affe::affe"
+echo "not matching"
+echo "standard error" >&2

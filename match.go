@@ -47,7 +47,7 @@ func (r *rule) matchSimple(l string) (*match, error) {
 		}, nil
 	}
 
-	return nil, errors.New("line does not match any regexp")
+	return nil, fmt.Errorf(`line "%s" does not match any regexp`, l)
 }
 
 func (r *rule) matchAggregate(l string) (*match, error) {
@@ -109,7 +109,7 @@ func (r *rule) matchAggregate(l string) (*match, error) {
 
 		a.registryMutex.Lock()
 		a.registry[id] = pip
-		if configuration.Verbose {
+		if r.runner.configuration.Verbose {
 			log.Printf(`%s: added ID "%s" with IP %s to registry`, r.name, id, pip)
 		}
 		a.registryMutex.Unlock()
@@ -119,7 +119,7 @@ func (r *rule) matchAggregate(l string) (*match, error) {
 			a.registryMutex.Lock()
 			if ip, e := a.registry[id]; e {
 				delete(a.registry, id)
-				if configuration.Verbose {
+				if r.runner.configuration.Verbose {
 					log.Printf(`%s: removed ID "%s" with IP %s from registry`, r.name, id, ip)
 				}
 			}
@@ -129,7 +129,7 @@ func (r *rule) matchAggregate(l string) (*match, error) {
 		return nil, errors.New("incomplete aggregate")
 	}
 
-	return nil, errors.New("line does not match any regexp")
+	return nil, fmt.Errorf(`line "%s" does not match any regexp`, l)
 }
 
 func (r *rule) match(l string) (*match, error) {

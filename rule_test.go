@@ -4,21 +4,14 @@ import (
 	"testing"
 )
 
-func validRule() *rule {
-	return &rule{
-		Action:      []string{"ban", "1h"},
-		Regexp:      []string{`%ip%\s%id%`},
-		Source:      []string{"file", "FILE"},
-		Aggregate:   []string{"1s", `a\s%id%`, `%id%\sb`},
-		Occurrences: []string{"5", "10s"},
-	}
-}
-
 func TestValidRules(t *testing.T) {
+	rn, err := newTestRunner()
+	testNoError(t, err)
+
 	ir := func(f func(r *rule)) {
-		r := validRule()
+		r := newTestValidRule()
 		f(r)
-		if err := r.initialize(); err != nil {
+		if err := r.initialize(rn); err != nil {
 			t.Errorf("failed to initialize rule: %s", err)
 		}
 	}
@@ -36,13 +29,22 @@ func TestValidRules(t *testing.T) {
 	ir(func(r *rule) {
 		r.Source = []string{"systemd", "service"}
 	})
+	ir(func(r *rule) {
+		r.Source = []string{"file", "FILE"}
+	})
+	ir(func(r *rule) {
+		r.Source = []string{"kernel"}
+	})
 }
 
 func TestInvalidRules(t *testing.T) {
+	rn, err := newTestRunner()
+	testNoError(t, err)
+
 	ee := func(s string, f func(r *rule)) {
-		r := validRule()
+		r := newTestValidRule()
 		f(r)
-		if err := r.initialize(); err == nil {
+		if err := r.initialize(rn); err == nil {
 			t.Errorf("expected error because of %s", s)
 		}
 	}
@@ -56,10 +58,10 @@ func TestInvalidRules(t *testing.T) {
 	ee("unknown action", func(r *rule) {
 		r.Action = []string{"unknown"}
 	})
-	ee("log action: missing level parameter", func(r *rule) {
+	ee("log action: missing type parameter", func(r *rule) {
 		r.Action = []string{"log"}
 	})
-	ee("log action: invalid level parameter", func(r *rule) {
+	ee("log action: invalid type parameter", func(r *rule) {
 		r.Action = []string{"log", "invalid"}
 	})
 	ee("log action: superfluous parameter", func(r *rule) {
@@ -161,4 +163,14 @@ func TestInvalidRules(t *testing.T) {
 	ee("occurrences: invalid interval parameter", func(r *rule) {
 		r.Occurrences = []string{"5", "5g"}
 	})
+}
+
+func TestWorker(t *testing.T) {
+	rn, err := newTestRunner()
+	testNoError(t, err)
+	testNoError(t, rn.initialize())
+
+	r := newTestValidRule()
+	testNoError(t, r.initialize(rn))
+	r.worker(false)
 }

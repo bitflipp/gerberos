@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"log"
-	"net"
 	"os/exec"
 	"regexp"
 	"strconv"
@@ -32,6 +31,7 @@ type rule struct {
 	Aggregate   []string
 	Occurrences []string
 
+	runner      *runner
 	name        string
 	source      source
 	regexp      []*regexp.Regexp
@@ -56,6 +56,8 @@ func (r *rule) initializeSource() error {
 		r.source = &systemdSource{}
 	case "kernel":
 		r.source = &kernelSource{}
+	case "test":
+		r.source = &testSource{}
 	default:
 		return errors.New("unknown source")
 	}
@@ -157,11 +159,7 @@ func (r *rule) initializeAggregate() error {
 		res = append(res, re)
 	}
 
-	r.aggregate = &aggregate{
-		registry: make(map[string]net.IP),
-		interval: i,
-		regexp:   res,
-	}
+	r.aggregate = newAggregate(i, res)
 
 	return nil
 }
@@ -190,16 +188,14 @@ func (r *rule) initializeOccurrences() error {
 		return fmt.Errorf("failed to parse interval parameter: %s", err)
 	}
 
-	r.occurrences = &occurrences{
-		registry: make(map[string][]time.Time),
-		interval: i,
-		count:    c,
-	}
+	r.occurrences = newOccurrences(i, c)
 
 	return nil
 }
 
-func (r *rule) initialize() error {
+func (r *rule) initialize(rn *runner) error {
+	r.runner = rn
+
 	if err := r.initializeSource(); err != nil {
 		return err
 	}
@@ -246,7 +242,7 @@ func (r *rule) processScanner(n string, args ...string) (chan *match, error) {
 			if m, err := r.match(sc.Text()); err == nil {
 				c <- m
 			} else {
-				if configuration.Verbose {
+				if r.runner.configuration.Verbose {
 					log.Printf("%s: failed to create match: %s", r.name, err)
 				}
 			}
@@ -269,7 +265,7 @@ func (r *rule) processScanner(n string, args ...string) (chan *match, error) {
 	return c, nil
 }
 
-func (r *rule) worker() {
+func (r *rule) worker(rq bool) {
 	c, err := r.source.matches()
 	if err != nil {
 		log.Printf("%s: failed to initialize matches channel: %s", r.name, err)
@@ -289,7 +285,8 @@ func (r *rule) worker() {
 		}
 	}
 
-	time.Sleep(5 * time.Second)
-	log.Printf("%s: queuing worker for respawn", r.name)
-	respawnWorkerChan <- r
+	if rq {
+		log.Printf("%s: queuing worker for respawn", r.name)
+		r.runner.respawnWorkerChan <- r
+	}
 }

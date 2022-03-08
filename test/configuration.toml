@@ -1,0 +1,9 @@
+backend = "test"
+verbose = true
+
+[rules]
+    [rules.test]
+        source = ["test"]        
+        regexp = ["%id% %ip%"]
+        action = ["log", "extended"]
+        occurrences = ["2", "1s"]
