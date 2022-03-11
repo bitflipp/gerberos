@@ -32,7 +32,7 @@ Minimal additional logic is applied. This is to adhere to the [Unix philosophy](
 
 ### Unit and system tests
 
-Required both ipset and nft to be installed.
+Requires ipset, iptables, and nftables to be installed.
 
 `make test_system`
 
