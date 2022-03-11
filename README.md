@@ -26,7 +26,15 @@ Minimal additional logic is applied. This is to adhere to the [Unix philosophy](
 
 ## Test
 
-`make test` (may require root privileges)
+### Unit tests only
+
+`make test`
+
+### Unit and system tests
+
+Required both ipset and nft to be installed.
+
+`make test_system`
 
 ## Example configuration file (TOML)
 
