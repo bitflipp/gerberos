@@ -77,6 +77,8 @@ func TestRunnerPersistence(t *testing.T) {
 			rn.configuration.Backend = b
 			rn.configuration.SaveFilePath = &n
 			testNoError(t, rn.initialize())
+			rn.backend.Ban("123.123.123.123", false, time.Hour)
+			rn.backend.Ban("affe::affe", true, time.Hour)
 			testNoError(t, rn.backend.Finalize())
 		}
 		{
