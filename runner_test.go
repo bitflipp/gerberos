@@ -43,6 +43,8 @@ func TestRunnerExecuteFlaky(t *testing.T) {
 	go rn.execute(false)
 	time.Sleep(100 * time.Millisecond)
 	rn.cancelChan <- true
+	time.Sleep(100 * time.Millisecond)
+	testNoError(t, rn.finalize())
 }
 
 func TestRunnerPerformActionFlaky(t *testing.T) {
@@ -89,6 +91,8 @@ func TestRunnerPersistence(t *testing.T) {
 			rn.configuration.Backend = b
 			rn.configuration.SaveFilePath = n
 			testNoError(t, rn.initialize())
+			time.Sleep(100 * time.Millisecond)
+			testNoError(t, rn.finalize())
 		}
 	}
 
