@@ -10,11 +10,15 @@ dist: clean
 
 release: dist
 	cp -r licenses-third-party gerberos.toml gerberos.service LICENSE dist
-	cd dist && tar czvf gerberos.tar.gz *
+	cd dist && tar czvf gerberos-$(shell cat VERSION).tar.gz *
 
 run: dist
-	sudo dist/gerberos
+	dist/gerberos
 
 test: clean
-	go test -coverprofile=gerberos.coverage
+	go test -v -coverprofile=gerberos.coverage
+	go tool cover -html=gerberos.coverage
+
+test_system: clean
+	go test -v -tags=system -coverprofile=gerberos.coverage
 	go tool cover -html=gerberos.coverage

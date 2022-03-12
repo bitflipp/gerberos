@@ -29,3 +29,11 @@ func (r *occurrences) add(h string) bool {
 
 	return false
 }
+
+func newOccurrences(i time.Duration, c int) *occurrences {
+	return &occurrences{
+		registry: make(map[string][]time.Time),
+		interval: i,
+		count:    c,
+	}
+}

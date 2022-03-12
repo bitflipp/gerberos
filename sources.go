@@ -80,3 +80,17 @@ func (k *kernelSource) initialize(r *rule) error {
 func (k *kernelSource) matches() (chan *match, error) {
 	return k.rule.processScanner("journalctl", "-kf", "-n", "0")
 }
+
+type testSource struct {
+	rule *rule
+}
+
+func (s *testSource) initialize(r *rule) error {
+	s.rule = r
+
+	return nil
+}
+
+func (s *testSource) matches() (chan *match, error) {
+	return s.rule.processScanner("test/producer")
+}

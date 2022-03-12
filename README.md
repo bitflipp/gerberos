@@ -8,7 +8,7 @@ Minimal additional logic is applied. This is to adhere to the [Unix philosophy](
 
 ## Requirements
 
-- Go 1.15.2 (development only)
+- Go 1.17.8 (development only)
 - GNU Make 4.3 (development only, optional)
 
 ### ipset backend
@@ -23,6 +23,18 @@ Minimal additional logic is applied. This is to adhere to the [Unix philosophy](
 ## Build
 
 `make build`
+
+## Test
+
+### Unit tests only
+
+`make test`
+
+### Unit and system tests
+
+Requires ipset, iptables, and nftables to be installed.
+
+`make test_system`
 
 ## Example configuration file (TOML)
 
