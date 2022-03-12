@@ -13,12 +13,16 @@ import (
 type runner struct {
 	configuration      *configuration
 	backend            backend
-	cancelChan         chan bool
+	cancelChan         chan bool // For testing purposes only
 	respawnWorkerDelay time.Duration
 	respawnWorkerChan  chan *rule
 }
 
 func (rn *runner) initialize() error {
+	if rn.configuration == nil {
+		return errors.New("configuration has not been set")
+	}
+
 	// Backend
 	switch rn.configuration.Backend {
 	case "":
@@ -84,7 +88,7 @@ func newRunner(c *configuration) *runner {
 	return &runner{
 		configuration:      c,
 		cancelChan:         make(chan bool),
-		respawnWorkerDelay: 2 * time.Second,
+		respawnWorkerDelay: 5 * time.Second,
 		respawnWorkerChan:  make(chan *rule),
 	}
 }

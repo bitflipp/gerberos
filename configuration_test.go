@@ -11,5 +11,5 @@ func TestConfigurationReadFileInvalid(t *testing.T) {
 	}
 
 	rc("")
-	rc("test/invalidConfiguration.toml")
+	rc("test/invalid_configuration.toml")
 }

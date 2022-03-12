@@ -86,7 +86,7 @@ func (b *ipsetBackend) createIptablesEntries() error {
 }
 
 func (b *ipsetBackend) saveIpsets() error {
-	f, err := os.Create(*b.runner.configuration.SaveFilePath)
+	f, err := os.Create(b.runner.configuration.SaveFilePath)
 	if err != nil {
 		return err
 	}
@@ -104,14 +104,14 @@ func (b *ipsetBackend) saveIpsets() error {
 }
 
 func (b *ipsetBackend) restoreIpsets() error {
-	f, err := os.Open(*b.runner.configuration.SaveFilePath)
+	f, err := os.Open(b.runner.configuration.SaveFilePath)
 	if err != nil {
 		return err
 	}
 
 	defer func() {
 		f.Close()
-		if err := os.Remove(*b.runner.configuration.SaveFilePath); err != nil {
+		if err := os.Remove(b.runner.configuration.SaveFilePath); err != nil {
 			log.Printf("failed to delete save file: %s", err)
 		}
 	}()
@@ -150,13 +150,13 @@ func (b *ipsetBackend) Initialize() error {
 	if err := b.deleteIpsetsAndIptablesEntries(); err != nil {
 		return fmt.Errorf("failed to delete ipsets: %w", err)
 	}
-	if b.runner.configuration.SaveFilePath != nil {
+	if b.runner.configuration.SaveFilePath != "" {
 		if err := b.restoreIpsets(); err != nil {
 			if err := b.createIpsets(); err != nil {
 				return fmt.Errorf("failed to create ipsets: %w", err)
 			}
 		} else {
-			log.Printf(`restored ipsets from "%s"`, *b.runner.configuration.SaveFilePath)
+			log.Printf(`restored ipsets from "%s"`, b.runner.configuration.SaveFilePath)
 		}
 	} else {
 		log.Printf("warning: not persisting ipsets")
@@ -186,9 +186,9 @@ func (b *ipsetBackend) Ban(ip string, ipv6 bool, d time.Duration) error {
 }
 
 func (b *ipsetBackend) Finalize() error {
-	if b.runner.configuration.SaveFilePath != nil {
+	if b.runner.configuration.SaveFilePath != "" {
 		if err := b.saveIpsets(); err != nil {
-			return fmt.Errorf(`failed to save ipsets to "%s": %w`, *b.runner.configuration.SaveFilePath, err)
+			return fmt.Errorf(`failed to save ipsets to "%s": %w`, b.runner.configuration.SaveFilePath, err)
 		}
 	}
 	if err := b.deleteIpsetsAndIptablesEntries(); err != nil {
@@ -240,8 +240,19 @@ func (b *nftBackend) createTables() error {
 	return nil
 }
 
+func (b *nftBackend) deleteTables() error {
+	if s, _, err := execute(nil, "nft", "delete", "table", "ip", b.table4Name); err != nil {
+		return fmt.Errorf(`failed to delete table "%s": %s`, b.table4Name, s)
+	}
+	if s, _, err := execute(nil, "nft", "delete", "table", "ip6", b.table6Name); err != nil {
+		return fmt.Errorf(`failed to delete table "%s": %s`, b.table6Name, s)
+	}
+
+	return nil
+}
+
 func (b *nftBackend) saveSets() error {
-	f, err := os.Create(*b.runner.configuration.SaveFilePath)
+	f, err := os.Create(b.runner.configuration.SaveFilePath)
 	if err != nil {
 		return err
 	}
@@ -266,7 +277,7 @@ func (b *nftBackend) saveSets() error {
 }
 
 func (b *nftBackend) restoreSets() error {
-	return exec.Command("nft", "-f", *b.runner.configuration.SaveFilePath).Run()
+	return exec.Command("nft", "-f", b.runner.configuration.SaveFilePath).Run()
 }
 
 func (b *nftBackend) Initialize() error {
@@ -287,11 +298,11 @@ func (b *nftBackend) Initialize() error {
 		return fmt.Errorf("failed to create tables: %w", err)
 	}
 
-	if b.runner.configuration.SaveFilePath != nil {
+	if b.runner.configuration.SaveFilePath != "" {
 		if err := b.restoreSets(); err != nil {
-			log.Printf(`failed to restore sets from "%s": %s`, *b.runner.configuration.SaveFilePath, err)
+			log.Printf(`failed to restore sets from "%s": %s`, b.runner.configuration.SaveFilePath, err)
 		} else {
-			log.Printf(`restored sets from "%s"`, *b.runner.configuration.SaveFilePath)
+			log.Printf(`restored sets from "%s"`, b.runner.configuration.SaveFilePath)
 		}
 	} else {
 		log.Printf("warning: not persisting sets")
@@ -327,10 +338,14 @@ func (b *nftBackend) Ban(ip string, ipv6 bool, d time.Duration) error {
 }
 
 func (b *nftBackend) Finalize() error {
-	if b.runner.configuration.SaveFilePath != nil {
+	if b.runner.configuration.SaveFilePath != "" {
 		if err := b.saveSets(); err != nil {
-			return fmt.Errorf(`failed to save sets to "%s": %w`, *b.runner.configuration.SaveFilePath, err)
+			return fmt.Errorf(`failed to save sets to "%s": %w`, b.runner.configuration.SaveFilePath, err)
 		}
+	}
+
+	if err := b.deleteTables(); err != nil {
+		return fmt.Errorf("failed to delete tables: %w", err)
 	}
 
 	return nil

@@ -25,6 +25,8 @@ func execute(in io.Reader, n string, args ...string) (string, int, error) {
 	return string(b), 0, nil
 }
 
+// Testing requires the instance name n to be dynamic.
+// It defaults to os.Args[0].
 func isInstanceAlreadyRunning(n string) (bool, error) {
 	s, _, err := execute(nil, "ps", "axco", "command")
 	if err != nil {

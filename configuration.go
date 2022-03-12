@@ -10,7 +10,7 @@ import (
 type configuration struct {
 	Verbose      bool
 	Backend      string
-	SaveFilePath *string
+	SaveFilePath string
 	Rules        map[string]*rule
 }
 

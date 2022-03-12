@@ -66,7 +66,7 @@ func TestRunnerPerformActionFlaky(t *testing.T) {
 }
 
 func TestRunnerPersistence(t *testing.T) {
-	pa := func(b string) {
+	p := func(b string) {
 		f, err := os.CreateTemp("", "gerberos-")
 		testNoError(t, err)
 		n := f.Name()
@@ -75,7 +75,7 @@ func TestRunnerPersistence(t *testing.T) {
 			rn, err := newTestRunner()
 			testNoError(t, err)
 			rn.configuration.Backend = b
-			rn.configuration.SaveFilePath = &n
+			rn.configuration.SaveFilePath = n
 			testNoError(t, rn.initialize())
 			rn.backend.Ban("123.123.123.123", false, time.Hour)
 			rn.backend.Ban("affe::affe", true, time.Hour)
@@ -85,11 +85,11 @@ func TestRunnerPersistence(t *testing.T) {
 			rn, err := newTestRunner()
 			testNoError(t, err)
 			rn.configuration.Backend = b
-			rn.configuration.SaveFilePath = &n
+			rn.configuration.SaveFilePath = n
 			testNoError(t, rn.initialize())
 		}
 	}
 
-	pa("ipset")
-	pa("nft")
+	p("ipset")
+	p("nft")
 }

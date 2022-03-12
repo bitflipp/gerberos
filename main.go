@@ -36,9 +36,7 @@ func main() {
 	}
 
 	// Runner
-	rn := &runner{
-		configuration: c,
-	}
+	rn := newRunner(c)
 	if err := rn.initialize(); err != nil {
 		log.Fatalf("failed to initialize runner: %s", err)
 	}
