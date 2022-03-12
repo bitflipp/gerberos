@@ -55,6 +55,8 @@ func TestRunnerPerformActionFlaky(t *testing.T) {
 		go rn.execute(false)
 		time.Sleep(200 * time.Millisecond)
 		rn.cancelChan <- true
+		time.Sleep(100 * time.Millisecond)
+		testNoError(t, rn.finalize())
 	}
 
 	pa("ipset", []string{"log", "simple"})
