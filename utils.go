@@ -2,7 +2,6 @@ package main
 
 import (
 	"io"
-	"log"
 	"os"
 	"os/exec"
 	"path"
@@ -12,7 +11,6 @@ import (
 func execute(in io.Reader, n string, args ...string) (string, int, error) {
 	cmd := exec.Command(n, args...)
 	cmd.Stdin = in
-	log.Printf("executing: %s", cmd)
 	b, err := cmd.CombinedOutput()
 	if err != nil {
 		eerr, ok := err.(*exec.ExitError)
