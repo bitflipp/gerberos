@@ -252,6 +252,13 @@ func (r *rule) processScanner(n string, args ...string) (chan *match, error) {
 			log.Printf(`%s: error while scanning command "%s": %s`, r.name, cmd, err.Error())
 		}
 		if err = cmd.Wait(); err != nil {
+			var eerr *exec.ExitError
+			if errors.As(err, &eerr) {
+				if eerr.ProcessState.ExitCode() == -1 {
+					// Program was terminated by a signal - in this case, do not show an error message
+					return
+				}
+			}
 			log.Printf(`%s: error while executing command "%s": %s`, r.name, cmd, err.Error())
 		}
 	}()
