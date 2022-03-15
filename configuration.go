@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 	"os"
 
@@ -21,7 +22,11 @@ func (c *configuration) readFile(fp string) error {
 	}
 	defer cf.Close()
 
-	if _, err := toml.DecodeReader(cf, &c); err != nil {
+	if _, err := toml.NewDecoder(cf).Decode(&c); err != nil {
+		var terr toml.ParseError
+		if errors.As(err, &terr) {
+			return fmt.Errorf("failed to decode configuration file: %s", terr.ErrorWithUsage())
+		}
 		return fmt.Errorf("failed to decode configuration file: %w", err)
 	}
 
