@@ -13,9 +13,9 @@ import (
 type runner struct {
 	configuration      *configuration
 	backend            backend
-	cancelChan         chan bool // For testing purposes only
 	respawnWorkerDelay time.Duration
 	respawnWorkerChan  chan *rule
+	executor           executor
 }
 
 func (rn *runner) initialize() error {
@@ -64,7 +64,7 @@ func (rn *runner) spawnWorker(r *rule, rq bool) {
 	log.Printf("%s: spawned worker", r.name)
 }
 
-func (rn *runner) execute(rq bool) {
+func (rn *runner) run(rq bool) {
 	for _, r := range rn.configuration.Rules {
 		rn.spawnWorker(r, rq)
 	}
@@ -74,8 +74,6 @@ func (rn *runner) execute(rq bool) {
 	for {
 		select {
 		case <-ic:
-			return
-		case <-rn.cancelChan:
 			return
 		case r := <-rn.respawnWorkerChan:
 			time.Sleep(rn.respawnWorkerDelay)
@@ -87,8 +85,8 @@ func (rn *runner) execute(rq bool) {
 func newRunner(c *configuration) *runner {
 	return &runner{
 		configuration:      c,
-		cancelChan:         make(chan bool),
 		respawnWorkerDelay: 5 * time.Second,
 		respawnWorkerChan:  make(chan *rule),
+		executor:           &defaultExecutor{},
 	}
 }

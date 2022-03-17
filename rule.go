@@ -118,6 +118,8 @@ func (r *rule) initializeAction() error {
 		r.action = &banAction{}
 	case "log":
 		r.action = &logAction{}
+	case "test":
+		r.action = &testAction{}
 	default:
 		return errors.New("unknown action")
 	}
@@ -255,7 +257,8 @@ func (r *rule) processScanner(n string, args ...string) (chan *match, error) {
 			var eerr *exec.ExitError
 			if errors.As(err, &eerr) {
 				if eerr.ProcessState.ExitCode() == -1 {
-					// Program was terminated by a signal - in this case, do not show an error message
+					// The process was terminated by a signal. This is part of a graceful
+					// shutdown. Therefore it isn't logged.
 					return
 				}
 			}
@@ -272,11 +275,11 @@ func (r *rule) processScanner(n string, args ...string) (chan *match, error) {
 	return c, nil
 }
 
-func (r *rule) worker(rq bool) {
+func (r *rule) worker(rq bool) error {
 	c, err := r.source.matches()
 	if err != nil {
 		log.Printf("%s: failed to initialize matches channel: %s", r.name, err)
-		return
+		return err
 	}
 
 	for m := range c {
@@ -296,4 +299,6 @@ func (r *rule) worker(rq bool) {
 		log.Printf("%s: queuing worker for respawn", r.name)
 		r.runner.respawnWorkerChan <- r
 	}
+
+	return nil
 }

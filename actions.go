@@ -8,8 +8,8 @@ import (
 )
 
 type action interface {
-	initialize(*rule) error
-	perform(*match) error
+	initialize(r *rule) error
+	perform(m *match) error
 }
 
 type banAction struct {
@@ -86,4 +86,18 @@ func (a *logAction) perform(m *match) error {
 	log.Printf("%s: %s", a.rule.name, s)
 
 	return nil
+}
+
+type testAction struct {
+	rule *rule
+}
+
+func (a *testAction) initialize(r *rule) error {
+	a.rule = r
+
+	return nil
+}
+
+func (a *testAction) perform(m *match) error {
+	return errFault
 }

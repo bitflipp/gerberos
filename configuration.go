@@ -3,6 +3,7 @@ package main
 import (
 	"errors"
 	"fmt"
+	"io"
 	"os"
 
 	"github.com/BurntSushi/toml"
@@ -22,7 +23,11 @@ func (c *configuration) readFile(fp string) error {
 	}
 	defer cf.Close()
 
-	if _, err := toml.NewDecoder(cf).Decode(&c); err != nil {
+	return c.read(cf)
+}
+
+func (c *configuration) read(r io.Reader) error {
+	if _, err := toml.NewDecoder(r).Decode(&c); err != nil {
 		var terr toml.ParseError
 		if errors.As(err, &terr) {
 			return fmt.Errorf("failed to decode configuration file: %s", terr.ErrorWithUsage())

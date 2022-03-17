@@ -7,7 +7,7 @@ import (
 )
 
 type source interface {
-	initialize(*rule) error
+	initialize(r *rule) error
 	matches() (chan *match, error)
 }
 
@@ -82,7 +82,9 @@ func (k *kernelSource) matches() (chan *match, error) {
 }
 
 type testSource struct {
-	rule *rule
+	rule        *rule
+	matchesErr  error
+	processPath string
 }
 
 func (s *testSource) initialize(r *rule) error {
@@ -92,5 +94,12 @@ func (s *testSource) initialize(r *rule) error {
 }
 
 func (s *testSource) matches() (chan *match, error) {
-	return s.rule.processScanner("test/producer")
+	if s.matchesErr != nil {
+		return nil, s.matchesErr
+	}
+	p := "test/producer"
+	if s.processPath != "" {
+		p = s.processPath
+	}
+	return s.rule.processScanner(p)
 }
