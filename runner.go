@@ -59,14 +59,14 @@ func (rn *runner) finalize() error {
 	return nil
 }
 
-func (rn *runner) spawnWorker(r *rule, rq bool) {
-	go r.worker(rq)
+func (rn *runner) spawnWorker(r *rule, requeue bool) {
+	go r.worker(requeue)
 	log.Printf("%s: spawned worker", r.name)
 }
 
-func (rn *runner) run(rq bool) {
+func (rn *runner) run(requeueWorkers bool) {
 	for _, r := range rn.configuration.Rules {
-		rn.spawnWorker(r, rq)
+		rn.spawnWorker(r, requeueWorkers)
 	}
 
 	ic := make(chan os.Signal, 1)
@@ -77,7 +77,7 @@ func (rn *runner) run(rq bool) {
 			return
 		case r := <-rn.respawnWorkerChan:
 			time.Sleep(rn.respawnWorkerDelay)
-			rn.spawnWorker(r, rq)
+			rn.spawnWorker(r, requeueWorkers)
 		}
 	}
 }

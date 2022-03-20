@@ -16,8 +16,8 @@ type configuration struct {
 	Rules        map[string]*rule
 }
 
-func (c *configuration) readFile(fp string) error {
-	cf, err := os.Open(fp)
+func (c *configuration) readFile(path string) error {
+	cf, err := os.Open(path)
 	if err != nil {
 		return fmt.Errorf("failed to open configuration file: %w", err)
 	}

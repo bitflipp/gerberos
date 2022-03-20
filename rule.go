@@ -221,8 +221,8 @@ func (r *rule) initialize(rn *runner) error {
 	return nil
 }
 
-func (r *rule) processScanner(n string, args ...string) (chan *match, error) {
-	cmd := exec.Command(n, args...)
+func (r *rule) processScanner(name string, args ...string) (chan *match, error) {
+	cmd := exec.Command(name, args...)
 	o, err := cmd.StdoutPipe()
 	if err != nil {
 		return nil, err
@@ -275,7 +275,7 @@ func (r *rule) processScanner(n string, args ...string) (chan *match, error) {
 	return c, nil
 }
 
-func (r *rule) worker(rq bool) error {
+func (r *rule) worker(requeue bool) error {
 	c, err := r.source.matches()
 	if err != nil {
 		log.Printf("%s: failed to initialize matches channel: %s", r.name, err)
@@ -295,7 +295,7 @@ func (r *rule) worker(rq bool) error {
 		}
 	}
 
-	if rq {
+	if requeue {
 		log.Printf("%s: queuing worker for respawn", r.name)
 		r.runner.respawnWorkerChan <- r
 	}
