@@ -48,12 +48,14 @@ func newTestFaultyExecutor(output string, exitCode int, err error, name string, 
 }
 
 func testError(t *testing.T, err error) {
+	t.Helper()
 	if err == nil {
 		t.Error("expected error")
 	}
 }
 
 func testNoError(t *testing.T, err error) {
+	t.Helper()
 	if err != nil {
 		t.Errorf("unexpected error: %s", err)
 	}
