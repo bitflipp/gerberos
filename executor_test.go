@@ -1,12 +1,16 @@
 package main
 
-import "testing"
+import (
+	"strings"
+	"testing"
+)
 
 func TestExecutorDefaultExecute(t *testing.T) {
 	e := &defaultExecutor{}
 	ts := "test"
 	o, c, err := e.execute("echo", ts)
 	testNoError(t, err)
+	o = strings.TrimSuffix(o, "\n")
 	if o != ts {
 		t.Errorf(`expected output "%s", got "%s"`, ts, o)
 	}

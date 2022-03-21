@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"io"
 	"os/exec"
-	"strings"
 )
 
 type executor interface {
@@ -41,5 +40,5 @@ func (e *defaultExecutor) executeWithStd(stdin io.Reader, stdout io.Writer, name
 		return "", -1, err
 	}
 
-	return strings.TrimSuffix(string(b), "\n"), 0, nil
+	return string(b), 0, nil
 }
