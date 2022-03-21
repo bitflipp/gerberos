@@ -147,7 +147,7 @@ func (b *ipsetBackend) Initialize() error {
 
 	// Initialize ipsets and ip(6)tables entries
 	if err := b.deleteIpsetsAndIptablesEntries(); err != nil {
-		return fmt.Errorf("failed to delete ipsets: %w", err)
+		return fmt.Errorf("failed to delete ipsets and iptables entries: %w", err)
 	}
 	if b.runner.configuration.SaveFilePath != "" {
 		if err := b.restoreIpsets(); err != nil {

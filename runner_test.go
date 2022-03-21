@@ -1,10 +1,11 @@
-//go:build system
+// //go:build system
 
 package main
 
 import (
 	"os"
 	"os/exec"
+	"sync"
 	"testing"
 	"time"
 )
@@ -106,29 +107,37 @@ func TestRunnerBackendFinalizeFaulty(t *testing.T) {
 	ff("nft", "", 1, errFault, "nft", "list", "set", "ip6", t6, s6)
 }
 
-func TestRunnerExecuteFlaky(t *testing.T) {
+func TestRunnerExecute(t *testing.T) {
 	rn, err := newTestRunner()
 	testNoError(t, err)
 	testNoError(t, rn.initialize())
-	go rn.run(false)
-	time.Sleep(100 * time.Millisecond)
+	wg := &sync.WaitGroup{}
+	wg.Add(1)
+	go func() {
+		rn.run(false)
+		testNoError(t, rn.finalize())
+		wg.Done()
+	}()
 	rn.signalChan <- os.Interrupt
-	time.Sleep(100 * time.Millisecond)
-	testNoError(t, rn.finalize())
+	wg.Wait()
 }
 
-func TestRunnerPerformActionFlaky(t *testing.T) {
+func TestRunnerPerformAction(t *testing.T) {
 	pa := func(b string, a []string) {
 		rn, err := newTestRunner()
 		testNoError(t, err)
 		rn.configuration.Backend = b
 		rn.configuration.Rules["test"].Action = a
 		testNoError(t, rn.initialize())
-		go rn.run(false)
-		time.Sleep(100 * time.Millisecond)
+		wg := &sync.WaitGroup{}
+		wg.Add(1)
+		go func() {
+			rn.run(false)
+			testNoError(t, rn.finalize())
+			wg.Done()
+		}()
 		rn.signalChan <- os.Interrupt
-		time.Sleep(100 * time.Millisecond)
-		testNoError(t, rn.finalize())
+		wg.Wait()
 	}
 
 	pa("ipset", []string{"log", "simple"})
@@ -139,7 +148,7 @@ func TestRunnerPerformActionFlaky(t *testing.T) {
 	pa("test", []string{"ban", "1h"})
 }
 
-func TestRunnerPersistenceFlaky(t *testing.T) {
+func TestRunnerPersistence(t *testing.T) {
 	p := func(b string) {
 		f, err := os.CreateTemp("", "gerberos-")
 		testNoError(t, err)
@@ -161,7 +170,6 @@ func TestRunnerPersistenceFlaky(t *testing.T) {
 			rn.configuration.Backend = b
 			rn.configuration.SaveFilePath = tn
 			testNoError(t, rn.initialize())
-			time.Sleep(100 * time.Millisecond)
 			testNoError(t, rn.finalize())
 		}
 	}
@@ -265,11 +273,18 @@ func TestRunnerRulesWorkerRequeue(t *testing.T) {
 	testNoError(t, err)
 	testNoError(t, rn.initialize())
 	r := rn.configuration.Rules["test"]
-	rn.respawnWorkerDelay = time.Duration(0)
+	rn.respawnWorkerDelay = 0
 	s := r.source.(*testSource)
 	s.processPath = "test/quitter"
-	go rn.run(true)
+	wg := sync.WaitGroup{}
+	wg.Add(1)
+	go func() {
+		rn.run(true)
+		wg.Done()
+	}()
 	r.worker(true)
+	rn.signalChan <- os.Interrupt
+	wg.Wait()
 }
 
 func TestRunnerRulesWorkerMatchesFaulty(t *testing.T) {
@@ -288,45 +303,55 @@ func TestRunnerRulesInvalid(t *testing.T) {
 	testError(t, rn.initialize())
 }
 
-func TestRunnerRulesWorkerInvalidProcessFlany(t *testing.T) {
+func TestRunnerRulesWorkerInvalidProcess(t *testing.T) {
 	rn, err := newTestRunner()
 	testNoError(t, err)
 	testNoError(t, rn.initialize())
 	r := rn.configuration.Rules["test"]
 	s := r.source.(*testSource)
 	s.processPath = "test/unknown"
-	go rn.run(false)
-	time.Sleep(100 * time.Millisecond)
+	wg := &sync.WaitGroup{}
+	wg.Add(1)
+	go func() {
+		rn.run(false)
+		wg.Done()
+	}()
 	rn.signalChan <- os.Interrupt
-	time.Sleep(100 * time.Millisecond)
+	wg.Wait()
 }
 
-func TestRunnerRulesWorkerInterruptFlaky(t *testing.T) {
+func TestRunnerRulesWorkerInterrupt(t *testing.T) {
 	rn, err := newTestRunner()
 	testNoError(t, err)
 	testNoError(t, rn.initialize())
 	r := rn.configuration.Rules["test"]
 	s := r.source.(*testSource)
 	s.processPath = "test/reader"
-	go rn.run(false)
-	time.Sleep(100 * time.Millisecond)
+	wg := &sync.WaitGroup{}
+	wg.Add(1)
+	go func() {
+		rn.run(false)
+		wg.Done()
+	}()
 	rn.signalChan <- os.Interrupt
-	time.Sleep(100 * time.Millisecond)
+	wg.Wait()
 }
 
-func TestRunnerSourcesFlaky(t *testing.T) {
+func TestRunnerSources(t *testing.T) {
 	ts := func(s []string) {
 		rn, err := newTestRunner()
 		testNoError(t, err)
 		r := rn.configuration.Rules["test"]
 		r.Source = s
 		testNoError(t, rn.initialize())
+		wg := &sync.WaitGroup{}
+		wg.Add(1)
 		go func() {
-			testNoError(t, r.worker(false))
+			rn.run(false)
+			wg.Done()
 		}()
-		time.Sleep(100 * time.Millisecond)
 		rn.signalChan <- os.Interrupt
-		time.Sleep(100 * time.Millisecond)
+		wg.Wait()
 	}
 
 	ts([]string{"file", "test/empty"})
