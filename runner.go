@@ -16,6 +16,7 @@ type runner struct {
 	respawnWorkerDelay time.Duration
 	respawnWorkerChan  chan *rule
 	executor           executor
+	signalChan         chan os.Signal
 }
 
 func (rn *runner) initialize() error {
@@ -69,11 +70,13 @@ func (rn *runner) run(requeueWorkers bool) {
 		rn.spawnWorker(r, requeueWorkers)
 	}
 
-	ic := make(chan os.Signal, 1)
-	signal.Notify(ic, syscall.SIGINT, syscall.SIGTERM)
+	signal.Notify(rn.signalChan, syscall.SIGINT, syscall.SIGTERM)
+	defer func() {
+		signal.Stop(rn.signalChan)
+	}()
 	for {
 		select {
-		case <-ic:
+		case <-rn.signalChan:
 			return
 		case r := <-rn.respawnWorkerChan:
 			time.Sleep(rn.respawnWorkerDelay)
@@ -88,5 +91,6 @@ func newRunner(c *configuration) *runner {
 		respawnWorkerDelay: 5 * time.Second,
 		respawnWorkerChan:  make(chan *rule),
 		executor:           &defaultExecutor{},
+		signalChan:         make(chan os.Signal, 1),
 	}
 }

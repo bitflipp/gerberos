@@ -4,7 +4,6 @@ import (
 	"errors"
 	"io"
 	"reflect"
-	"syscall"
 	"testing"
 	"time"
 )
@@ -90,8 +89,4 @@ func newTestValidRule() *rule {
 
 func newTestOccurrences() *occurrences {
 	return newOccurrences(100*time.Millisecond, 10)
-}
-
-func testSendInterrupt() error {
-	return syscall.Kill(syscall.Getpid(), syscall.SIGINT)
 }

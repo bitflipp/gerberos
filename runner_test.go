@@ -112,7 +112,7 @@ func TestRunnerExecuteFlaky(t *testing.T) {
 	testNoError(t, rn.initialize())
 	go rn.run(false)
 	time.Sleep(100 * time.Millisecond)
-	testNoError(t, testSendInterrupt())
+	rn.signalChan <- os.Interrupt
 	time.Sleep(100 * time.Millisecond)
 	testNoError(t, rn.finalize())
 }
@@ -126,7 +126,7 @@ func TestRunnerPerformActionFlaky(t *testing.T) {
 		testNoError(t, rn.initialize())
 		go rn.run(false)
 		time.Sleep(100 * time.Millisecond)
-		testNoError(t, testSendInterrupt())
+		rn.signalChan <- os.Interrupt
 		time.Sleep(100 * time.Millisecond)
 		testNoError(t, rn.finalize())
 	}
@@ -297,7 +297,7 @@ func TestRunnerRulesWorkerInvalidProcessFlany(t *testing.T) {
 	s.processPath = "test/unknown"
 	go rn.run(false)
 	time.Sleep(100 * time.Millisecond)
-	testSendInterrupt()
+	rn.signalChan <- os.Interrupt
 	time.Sleep(100 * time.Millisecond)
 }
 
@@ -310,7 +310,7 @@ func TestRunnerRulesWorkerInterruptFlaky(t *testing.T) {
 	s.processPath = "test/reader"
 	go rn.run(false)
 	time.Sleep(100 * time.Millisecond)
-	testSendInterrupt()
+	rn.signalChan <- os.Interrupt
 	time.Sleep(100 * time.Millisecond)
 }
 
@@ -325,7 +325,7 @@ func TestRunnerSourcesFlaky(t *testing.T) {
 			testNoError(t, r.worker(false))
 		}()
 		time.Sleep(100 * time.Millisecond)
-		testSendInterrupt()
+		rn.signalChan <- os.Interrupt
 		time.Sleep(100 * time.Millisecond)
 	}
 
