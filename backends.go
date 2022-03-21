@@ -313,23 +313,18 @@ func (b *nftBackend) Initialize() error {
 func (b *nftBackend) Ban(ip string, ipv6 bool, d time.Duration) error {
 	ds := int64(d.Seconds())
 
+	t, tn, sn := "ip", b.table4Name, b.set4Name
 	if ipv6 {
-		if s, ec, err := b.runner.executor.execute("nft", "add", "element", "ip6", b.table6Name, b.set6Name, fmt.Sprintf("{ %s timeout %ds }", ip, ds)); err != nil {
-			if ec == 1 {
-				// This IP is probably already in set. Ignore the error. This is to be reworked
-				// when support for nft < v1.0.0 is dropped. However, since Ubuntu 20.04 only has
-				// v0.9.3, this is needed.
-				return nil
-			}
-			return fmt.Errorf(`failed to add element to set "%s": %s`, b.set6Name, s)
+		t, tn, sn = "ip6", b.table6Name, b.set6Name
+	}
+	if s, ec, err := b.runner.executor.execute("nft", "add", "element", t, tn, sn, fmt.Sprintf("{ %s timeout %ds }", ip, ds)); err != nil {
+		if ec == 1 {
+			// This IP is probably already in set. Ignore the error. This is to be reworked
+			// when support for nft < v1.0.0 is dropped. However, since Ubuntu 20.04 only has
+			// v0.9.3, this is needed.
+			return nil
 		}
-	} else {
-		if s, ec, err := b.runner.executor.execute("nft", "add", "element", "ip", b.table4Name, b.set4Name, fmt.Sprintf("{ %s timeout %ds }", ip, ds)); err != nil {
-			if ec == 1 {
-				return nil
-			}
-			return fmt.Errorf(`failed to add element to set "%s": %s`, b.set4Name, s)
-		}
+		return fmt.Errorf(`failed to add element to set "%s": %s`, b.set6Name, s)
 	}
 
 	return nil
