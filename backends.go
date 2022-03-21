@@ -41,9 +41,11 @@ func (b *ipsetBackend) deleteIpsetsAndIptablesEntries() error {
 	if s, ec, _ := b.runner.executor.execute("ip6tables", "-X", b.chainName); ec > 2 {
 		return fmt.Errorf(`failed to delete ip6tables chain "%s": %s`, b.chainName, s)
 	}
+	time.Sleep(250 * time.Millisecond) // Workaround for potential kernel lock problems
 	if s, ec, _ := b.runner.executor.execute("ipset", "destroy", b.ipset4Name); ec > 1 {
 		return fmt.Errorf(`failed to destroy ipset "%s": %s`, b.ipset4Name, s)
 	}
+	time.Sleep(250 * time.Millisecond) // Workaround for potential kernel lock problems
 	if s, ec, _ := b.runner.executor.execute("ipset", "destroy", b.ipset6Name); ec > 1 {
 		return fmt.Errorf(`failed to destroy ipset "%s": %s`, b.ipset6Name, s)
 	}
@@ -52,9 +54,11 @@ func (b *ipsetBackend) deleteIpsetsAndIptablesEntries() error {
 }
 
 func (b *ipsetBackend) createIpsets() error {
+	time.Sleep(250 * time.Millisecond) // Workaround for potential kernel lock problems
 	if s, ec, _ := b.runner.executor.execute("ipset", "create", b.ipset4Name, "hash:ip", "timeout", "0"); ec != 0 {
 		return fmt.Errorf(`failed to create ipset "%s": %s`, b.ipset4Name, s)
 	}
+	time.Sleep(250 * time.Millisecond) // Workaround for potential kernel lock problems
 	if s, ec, _ := b.runner.executor.execute("ipset", "create", b.ipset6Name, "hash:ip", "family", "inet6", "timeout", "0"); ec != 0 {
 		return fmt.Errorf(`failed to create ipset "%s": %s`, b.ipset6Name, s)
 	}
