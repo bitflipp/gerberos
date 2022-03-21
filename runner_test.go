@@ -329,7 +329,7 @@ func TestRunnerSourcesFlaky(t *testing.T) {
 		time.Sleep(100 * time.Millisecond)
 	}
 
-	ts([]string{"file", "test/file"})
+	ts([]string{"file", "test/empty"})
 	ts([]string{"systemd", "service"})
 	ts([]string{"kernel"})
 }
