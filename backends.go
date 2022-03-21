@@ -11,7 +11,7 @@ import (
 
 type backend interface {
 	Initialize() error
-	Ban(string, bool, time.Duration) error
+	Ban(ip string, ipv6 bool, d time.Duration) error
 	Finalize() error
 }
 
@@ -23,28 +23,30 @@ type ipsetBackend struct {
 }
 
 func (b *ipsetBackend) deleteIpsetsAndIptablesEntries() error {
-	if s, ec, _ := execute(nil, "iptables", "-D", b.chainName, "-j", "DROP", "-m", "set", "--match-set", b.ipset4Name, "src"); ec > 2 {
+	if s, ec, _ := b.runner.executor.execute("iptables", "-D", b.chainName, "-j", "DROP", "-m", "set", "--match-set", b.ipset4Name, "src"); ec > 2 {
 		return fmt.Errorf(`failed to delete iptables entry for set "%s": %s`, b.ipset4Name, s)
 	}
-	if s, ec, _ := execute(nil, "iptables", "-D", "INPUT", "-j", b.chainName); ec > 2 {
+	if s, ec, _ := b.runner.executor.execute("iptables", "-D", "INPUT", "-j", b.chainName); ec > 2 {
 		return fmt.Errorf(`failed to delete iptables entry for chain "%s": %s`, b.chainName, s)
 	}
-	if s, ec, _ := execute(nil, "iptables", "-X", b.chainName); ec > 2 {
+	if s, ec, _ := b.runner.executor.execute("iptables", "-X", b.chainName); ec > 2 {
 		return fmt.Errorf(`failed to delete iptables chain "%s": %s`, b.chainName, s)
 	}
-	if s, ec, _ := execute(nil, "ip6tables", "-D", b.chainName, "-j", "DROP", "-m", "set", "--match-set", b.ipset6Name, "src"); ec > 2 {
+	if s, ec, _ := b.runner.executor.execute("ip6tables", "-D", b.chainName, "-j", "DROP", "-m", "set", "--match-set", b.ipset6Name, "src"); ec > 2 {
 		return fmt.Errorf(`failed to delete ip6tables entry for set "%s": %s`, b.ipset6Name, s)
 	}
-	if s, ec, _ := execute(nil, "ip6tables", "-D", "INPUT", "-j", b.chainName); ec > 2 {
+	if s, ec, _ := b.runner.executor.execute("ip6tables", "-D", "INPUT", "-j", b.chainName); ec > 2 {
 		return fmt.Errorf(`failed to delete ip6tables entry for chain "%s": %s`, b.chainName, s)
 	}
-	if s, ec, _ := execute(nil, "ip6tables", "-X", b.chainName); ec > 2 {
+	if s, ec, _ := b.runner.executor.execute("ip6tables", "-X", b.chainName); ec > 2 {
 		return fmt.Errorf(`failed to delete ip6tables chain "%s": %s`, b.chainName, s)
 	}
-	if s, ec, _ := execute(nil, "ipset", "destroy", b.ipset4Name); ec > 1 {
+	time.Sleep(250 * time.Millisecond) // Workaround for potential kernel lock problems
+	if s, ec, _ := b.runner.executor.execute("ipset", "destroy", b.ipset4Name); ec > 1 {
 		return fmt.Errorf(`failed to destroy ipset "%s": %s`, b.ipset4Name, s)
 	}
-	if s, ec, _ := execute(nil, "ipset", "destroy", b.ipset6Name); ec > 1 {
+	time.Sleep(250 * time.Millisecond) // Workaround for potential kernel lock problems
+	if s, ec, _ := b.runner.executor.execute("ipset", "destroy", b.ipset6Name); ec > 1 {
 		return fmt.Errorf(`failed to destroy ipset "%s": %s`, b.ipset6Name, s)
 	}
 
@@ -52,10 +54,12 @@ func (b *ipsetBackend) deleteIpsetsAndIptablesEntries() error {
 }
 
 func (b *ipsetBackend) createIpsets() error {
-	if s, ec, _ := execute(nil, "ipset", "create", b.ipset4Name, "hash:ip", "timeout", "0"); ec != 0 {
+	time.Sleep(250 * time.Millisecond) // Workaround for potential kernel lock problems
+	if s, ec, _ := b.runner.executor.execute("ipset", "create", b.ipset4Name, "hash:ip", "timeout", "0"); ec != 0 {
 		return fmt.Errorf(`failed to create ipset "%s": %s`, b.ipset4Name, s)
 	}
-	if s, ec, _ := execute(nil, "ipset", "create", b.ipset6Name, "hash:ip", "family", "inet6", "timeout", "0"); ec != 0 {
+	time.Sleep(250 * time.Millisecond) // Workaround for potential kernel lock problems
+	if s, ec, _ := b.runner.executor.execute("ipset", "create", b.ipset6Name, "hash:ip", "family", "inet6", "timeout", "0"); ec != 0 {
 		return fmt.Errorf(`failed to create ipset "%s": %s`, b.ipset6Name, s)
 	}
 
@@ -63,22 +67,22 @@ func (b *ipsetBackend) createIpsets() error {
 }
 
 func (b *ipsetBackend) createIptablesEntries() error {
-	if s, ec, _ := execute(nil, "iptables", "-N", b.chainName); ec != 0 {
+	if s, ec, _ := b.runner.executor.execute("iptables", "-N", b.chainName); ec != 0 {
 		return fmt.Errorf(`failed to create iptables chain "%s": %s`, b.chainName, s)
 	}
-	if s, ec, _ := execute(nil, "iptables", "-I", b.chainName, "-j", "DROP", "-m", "set", "--match-set", b.ipset4Name, "src"); ec != 0 {
+	if s, ec, _ := b.runner.executor.execute("iptables", "-I", b.chainName, "-j", "DROP", "-m", "set", "--match-set", b.ipset4Name, "src"); ec != 0 {
 		return fmt.Errorf(`failed to create iptables entry for set "%s": %s`, b.ipset4Name, s)
 	}
-	if s, ec, _ := execute(nil, "iptables", "-I", "INPUT", "-j", b.chainName); ec != 0 {
+	if s, ec, _ := b.runner.executor.execute("iptables", "-I", "INPUT", "-j", b.chainName); ec != 0 {
 		return fmt.Errorf(`failed to create iptables entry for chain "%s": %s`, b.chainName, s)
 	}
-	if s, ec, _ := execute(nil, "ip6tables", "-N", b.chainName); ec != 0 {
+	if s, ec, _ := b.runner.executor.execute("ip6tables", "-N", b.chainName); ec != 0 {
 		return fmt.Errorf(`failed to create ip6tables chain "%s": %s`, b.chainName, s)
 	}
-	if s, ec, _ := execute(nil, "ip6tables", "-I", b.chainName, "-j", "DROP", "-m", "set", "--match-set", b.ipset6Name, "src"); ec != 0 {
+	if s, ec, _ := b.runner.executor.execute("ip6tables", "-I", b.chainName, "-j", "DROP", "-m", "set", "--match-set", b.ipset6Name, "src"); ec != 0 {
 		return fmt.Errorf(`failed to create ip6tables entry for set "%s": %s`, b.ipset6Name, s)
 	}
-	if s, ec, _ := execute(nil, "ip6tables", "-I", "INPUT", "-j", b.chainName); ec != 0 {
+	if s, ec, _ := b.runner.executor.execute("ip6tables", "-I", "INPUT", "-j", b.chainName); ec != 0 {
 		return fmt.Errorf(`failed to create ip6tables entry for chain "%s": %s`, b.chainName, s)
 	}
 
@@ -92,10 +96,7 @@ func (b *ipsetBackend) saveIpsets() error {
 	}
 	defer f.Close()
 
-	cmd := exec.Command("ipset", "save")
-	cmd.Stdout = f
-	err = cmd.Run()
-	if err != nil {
+	if _, _, err := b.runner.executor.executeWithStd(nil, f, "ipset", "save"); err != nil {
 		return err
 	}
 
@@ -116,9 +117,11 @@ func (b *ipsetBackend) restoreIpsets() error {
 		}
 	}()
 
-	cmd := exec.Command("ipset", "restore")
-	cmd.Stdin = f
-	return cmd.Run()
+	if _, _, err := b.runner.executor.executeWithStd(f, nil, "ipset", "restore"); err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func (b *ipsetBackend) Initialize() error {
@@ -127,19 +130,19 @@ func (b *ipsetBackend) Initialize() error {
 	b.ipset6Name = "gerberos6"
 
 	// Check privileges
-	if s, _, err := execute(nil, "ipset", "list"); err != nil {
+	if s, _, err := b.runner.executor.execute("ipset", "list"); err != nil {
 		if errors.Is(err, exec.ErrNotFound) {
 			return errors.New("ipset: command not found")
 		}
 		return fmt.Errorf("ipset: insufficient privileges: %s", s)
 	}
-	if s, _, err := execute(nil, "iptables", "-L"); err != nil {
+	if s, _, err := b.runner.executor.execute("iptables", "-L"); err != nil {
 		if errors.Is(err, exec.ErrNotFound) {
 			return errors.New("iptables: command not found")
 		}
 		return fmt.Errorf("iptables: insufficient privileges: %s", s)
 	}
-	if s, _, err := execute(nil, "ip6tables", "-L"); err != nil {
+	if s, _, err := b.runner.executor.execute("ip6tables", "-L"); err != nil {
 		if errors.Is(err, exec.ErrNotFound) {
 			return errors.New("ip6tables: command not found")
 		}
@@ -148,7 +151,7 @@ func (b *ipsetBackend) Initialize() error {
 
 	// Initialize ipsets and ip(6)tables entries
 	if err := b.deleteIpsetsAndIptablesEntries(); err != nil {
-		return fmt.Errorf("failed to delete ipsets: %w", err)
+		return fmt.Errorf("failed to delete ipsets and iptables entries: %w", err)
 	}
 	if b.runner.configuration.SaveFilePath != "" {
 		if err := b.restoreIpsets(); err != nil {
@@ -177,8 +180,8 @@ func (b *ipsetBackend) Ban(ip string, ipv6 bool, d time.Duration) error {
 		s = b.ipset6Name
 	}
 	ds := int64(d.Seconds())
-	if _, _, err := execute(nil, "ipset", "test", s, ip); err != nil {
-		if _, _, err := execute(nil, "ipset", "add", s, ip, "timeout", fmt.Sprint(ds)); err != nil {
+	if _, _, err := b.runner.executor.execute("ipset", "test", s, ip); err != nil {
+		if _, _, err := b.runner.executor.execute("ipset", "add", s, ip, "timeout", fmt.Sprint(ds)); err != nil {
 			return err
 		}
 	}
@@ -206,34 +209,34 @@ type nftBackend struct {
 }
 
 func (b *nftBackend) createTables() error {
-	if s, _, err := execute(nil, "nft", "add", "table", "ip", b.table4Name); err != nil {
+	if s, _, err := b.runner.executor.execute("nft", "add", "table", "ip", b.table4Name); err != nil {
 		return fmt.Errorf(`failed to add table "%s": %s`, b.table4Name, s)
 	}
-	if s, _, err := execute(nil, "nft", "add", "set", "ip", b.table4Name, b.set4Name, "{ type ipv4_addr; flags timeout; }"); err != nil {
+	if s, _, err := b.runner.executor.execute("nft", "add", "set", "ip", b.table4Name, b.set4Name, "{ type ipv4_addr; flags timeout; }"); err != nil {
 		return fmt.Errorf(`failed to add ip set "%s": %s`, b.table4Name, s)
 	}
-	if s, _, err := execute(nil, "nft", "add", "chain", "ip", b.table4Name, "input", "{ type filter hook input priority 0; policy accept; }"); err != nil {
+	if s, _, err := b.runner.executor.execute("nft", "add", "chain", "ip", b.table4Name, "input", "{ type filter hook input priority 0; policy accept; }"); err != nil {
 		return fmt.Errorf(`failed to add input chain: %s`, s)
 	}
-	if s, _, err := execute(nil, "nft", "flush", "chain", "ip", b.table4Name, "input"); err != nil {
+	if s, _, err := b.runner.executor.execute("nft", "flush", "chain", "ip", b.table4Name, "input"); err != nil {
 		return fmt.Errorf(`failed to flush input chain: %s`, s)
 	}
-	if s, _, err := execute(nil, "nft", "add", "rule", "ip", b.table4Name, "input", "ip", "saddr", "@"+b.set4Name, "reject"); err != nil {
+	if s, _, err := b.runner.executor.execute("nft", "add", "rule", "ip", b.table4Name, "input", "ip", "saddr", "@"+b.set4Name, "reject"); err != nil {
 		return fmt.Errorf(`failed to add rule: %s`, s)
 	}
-	if s, _, err := execute(nil, "nft", "add", "table", "ip6", b.table6Name); err != nil {
+	if s, _, err := b.runner.executor.execute("nft", "add", "table", "ip6", b.table6Name); err != nil {
 		return fmt.Errorf(`failed to create ip6 table "%s": %s`, b.table6Name, s)
 	}
-	if s, _, err := execute(nil, "nft", "add", "set", "ip6", b.table6Name, b.set6Name, "{ type ipv6_addr; flags timeout; }"); err != nil {
+	if s, _, err := b.runner.executor.execute("nft", "add", "set", "ip6", b.table6Name, b.set6Name, "{ type ipv6_addr; flags timeout; }"); err != nil {
 		return fmt.Errorf(`failed to add ip set "%s": %s`, b.table6Name, s)
 	}
-	if s, _, err := execute(nil, "nft", "add", "chain", "ip6", b.table6Name, "input", "{ type filter hook input priority 0; policy accept; }"); err != nil {
+	if s, _, err := b.runner.executor.execute("nft", "add", "chain", "ip6", b.table6Name, "input", "{ type filter hook input priority 0; policy accept; }"); err != nil {
 		return fmt.Errorf(`failed to add input chain: %s`, s)
 	}
-	if s, _, err := execute(nil, "nft", "flush", "chain", "ip6", b.table6Name, "input"); err != nil {
+	if s, _, err := b.runner.executor.execute("nft", "flush", "chain", "ip6", b.table6Name, "input"); err != nil {
 		return fmt.Errorf(`failed to flush input chain: %s`, s)
 	}
-	if s, _, err := execute(nil, "nft", "add", "rule", "ip6", b.table6Name, "input", "ip6", "saddr", "@"+b.set6Name, "reject"); err != nil {
+	if s, _, err := b.runner.executor.execute("nft", "add", "rule", "ip6", b.table6Name, "input", "ip6", "saddr", "@"+b.set6Name, "reject"); err != nil {
 		return fmt.Errorf(`failed to add rule: %s`, s)
 	}
 
@@ -241,10 +244,10 @@ func (b *nftBackend) createTables() error {
 }
 
 func (b *nftBackend) deleteTables() error {
-	if s, _, err := execute(nil, "nft", "delete", "table", "ip", b.table4Name); err != nil {
+	if s, _, err := b.runner.executor.execute("nft", "delete", "table", "ip", b.table4Name); err != nil {
 		return fmt.Errorf(`failed to delete table "%s": %s`, b.table4Name, s)
 	}
-	if s, _, err := execute(nil, "nft", "delete", "table", "ip6", b.table6Name); err != nil {
+	if s, _, err := b.runner.executor.execute("nft", "delete", "table", "ip6", b.table6Name); err != nil {
 		return fmt.Errorf(`failed to delete table "%s": %s`, b.table6Name, s)
 	}
 
@@ -258,17 +261,11 @@ func (b *nftBackend) saveSets() error {
 	}
 	defer f.Close()
 
-	cmd := exec.Command("nft", "list", "set", "ip", b.table4Name, b.set4Name)
-	cmd.Stdout = f
-	err = cmd.Run()
-	if err != nil {
+	if _, _, err := b.runner.executor.executeWithStd(nil, f, "nft", "list", "set", "ip", b.table4Name, b.set4Name); err != nil {
 		return err
 	}
 
-	cmd = exec.Command("nft", "list", "set", "ip6", b.table6Name, b.set6Name)
-	cmd.Stdout = f
-	err = cmd.Run()
-	if err != nil {
+	if _, _, err := b.runner.executor.executeWithStd(nil, f, "nft", "list", "set", "ip6", b.table6Name, b.set6Name); err != nil {
 		return err
 	}
 
@@ -277,7 +274,9 @@ func (b *nftBackend) saveSets() error {
 }
 
 func (b *nftBackend) restoreSets() error {
-	return exec.Command("nft", "-f", b.runner.configuration.SaveFilePath).Run()
+	_, _, err := b.runner.executor.execute("nft", "-f", b.runner.configuration.SaveFilePath)
+
+	return err
 }
 
 func (b *nftBackend) Initialize() error {
@@ -287,7 +286,7 @@ func (b *nftBackend) Initialize() error {
 	b.set6Name = "set6"
 
 	// Check privileges
-	if s, _, err := execute(nil, "nft", "list", "ruleset"); err != nil {
+	if s, _, err := b.runner.executor.execute("nft", "list", "ruleset"); err != nil {
 		if errors.Is(err, exec.ErrNotFound) {
 			return errors.New("nft: command not found")
 		}
@@ -314,24 +313,18 @@ func (b *nftBackend) Initialize() error {
 func (b *nftBackend) Ban(ip string, ipv6 bool, d time.Duration) error {
 	ds := int64(d.Seconds())
 
+	t, tn, sn := "ip", b.table4Name, b.set4Name
 	if ipv6 {
-		if s, ec, err := execute(nil, "nft", "add", "element", "ip6", b.table6Name, b.set6Name, fmt.Sprintf("{ %s timeout %ds }", ip, ds)); err != nil {
-			if ec == 1 {
-				// This ip is probably already in set. Ignore the error.
-				// on netfilters >= 1.0.0, this shouldn't be a problem any more. However, since Ubuntu 20.04. only has v0.9.3, this is needed
-				return nil
-			}
-			return fmt.Errorf(`failed to add element to set "%s": %s`, b.set6Name, s)
+		t, tn, sn = "ip6", b.table6Name, b.set6Name
+	}
+	if s, ec, err := b.runner.executor.execute("nft", "add", "element", t, tn, sn, fmt.Sprintf("{ %s timeout %ds }", ip, ds)); err != nil {
+		if ec == 1 {
+			// This IP is probably already in set. Ignore the error. This is to be reworked
+			// when support for nft < v1.0.0 is dropped. However, since Ubuntu 20.04 only has
+			// v0.9.3, this is needed.
+			return nil
 		}
-	} else {
-		if s, ec, err := execute(nil, "nft", "add", "element", "ip", b.table4Name, b.set4Name, fmt.Sprintf("{ %s timeout %ds }", ip, ds)); err != nil {
-			if ec == 1 {
-				// This ip is probably already in set. Ignore the error.
-				// on netfilters >= 1.0.0, this shouldn't be a problem any more. However, since Ubuntu 20.04. only has v0.9.3, this is needed
-				return nil
-			}
-			return fmt.Errorf(`failed to add element to set "%s": %s`, b.set4Name, s)
-		}
+		return fmt.Errorf(`failed to add element to set "%s": %s`, b.set6Name, s)
 	}
 
 	return nil
@@ -352,17 +345,20 @@ func (b *nftBackend) Finalize() error {
 }
 
 type testBackend struct {
-	runner *runner
+	runner        *runner
+	initializeErr error
+	banErr        error
+	finalizeErr   error
 }
 
 func (b *testBackend) Initialize() error {
-	return nil
+	return b.initializeErr
 }
 
 func (b *testBackend) Ban(ip string, ipv6 bool, d time.Duration) error {
-	return nil
+	return b.banErr
 }
 
 func (b *testBackend) Finalize() error {
-	return nil
+	return b.finalizeErr
 }

@@ -14,10 +14,10 @@ type aggregate struct {
 	regexp        []*regexp.Regexp
 }
 
-func newAggregate(i time.Duration, res []*regexp.Regexp) *aggregate {
+func newAggregate(interval time.Duration, res []*regexp.Regexp) *aggregate {
 	return &aggregate{
 		registry: make(map[string]net.IP),
-		interval: i,
+		interval: interval,
 		regexp:   res,
 	}
 }

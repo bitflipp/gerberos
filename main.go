@@ -20,15 +20,6 @@ func main() {
 	cfp := flag.String("c", "./gerberos.toml", "Path to TOML configuration file")
 	flag.Parse()
 
-	// Already running instance?
-	iar, err := isInstanceAlreadyRunning("")
-	if err != nil {
-		log.Fatalf("failed to check for an already running instance: %s", err)
-	}
-	if iar {
-		log.Fatalf("an instance is already running")
-	}
-
 	// Configuration
 	c := &configuration{}
 	if err := c.readFile(*cfp); err != nil {
@@ -45,5 +36,5 @@ func main() {
 			log.Fatalf("failed to finalize runner: %s", err)
 		}
 	}()
-	rn.execute(true)
+	rn.run(true)
 }

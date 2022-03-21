@@ -152,3 +152,16 @@ func TestMatchesStringer(t *testing.T) {
 		t.Errorf(`expected: "%s", got "%s"`, ese6, gse6)
 	}
 }
+
+func TestMatchesAggregateInvalid(t *testing.T) {
+	rn, err := newTestRunner()
+	testNoError(t, err)
+	r := newTestValidRule()
+	testNoError(t, r.initialize(rn))
+	r.regexp = []*regexp.Regexp{regexp.MustCompile("missing IP subexpression")}
+	_, err = r.matchAggregate("missing IP subexpression")
+	testError(t, err)
+	r.regexp = []*regexp.Regexp{regexp.MustCompile(ipRegexpText)}
+	_, err = r.matchAggregate("123.123.123.123")
+	testError(t, err)
+}

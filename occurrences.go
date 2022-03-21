@@ -8,21 +8,21 @@ type occurrences struct {
 	count    int
 }
 
-func (r *occurrences) add(h string) bool {
-	if _, f := r.registry[h]; !f {
-		r.registry[h] = []time.Time{time.Now()}
+func (r *occurrences) add(host string) bool {
+	if _, f := r.registry[host]; !f {
+		r.registry[host] = []time.Time{time.Now()}
 		return false
 	}
 
-	r.registry[h] = append(r.registry[h], time.Now())
-	if len(r.registry[h]) > r.count {
-		r.registry[h] = r.registry[h][1:]
+	r.registry[host] = append(r.registry[host], time.Now())
+	if len(r.registry[host]) > r.count {
+		r.registry[host] = r.registry[host][1:]
 	}
 
-	if len(r.registry[h]) == r.count {
-		d := r.registry[h][r.count-1].Sub(r.registry[h][0])
+	if len(r.registry[host]) == r.count {
+		d := r.registry[host][r.count-1].Sub(r.registry[host][0])
 		if d <= r.interval {
-			delete(r.registry, h)
+			delete(r.registry, host)
 			return true
 		}
 	}
@@ -30,10 +30,10 @@ func (r *occurrences) add(h string) bool {
 	return false
 }
 
-func newOccurrences(i time.Duration, c int) *occurrences {
+func newOccurrences(interval time.Duration, count int) *occurrences {
 	return &occurrences{
 		registry: make(map[string][]time.Time),
-		interval: i,
-		count:    c,
+		interval: interval,
+		count:    count,
 	}
 }

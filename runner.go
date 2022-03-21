@@ -13,9 +13,10 @@ import (
 type runner struct {
 	configuration      *configuration
 	backend            backend
-	cancelChan         chan bool // For testing purposes only
 	respawnWorkerDelay time.Duration
 	respawnWorkerChan  chan *rule
+	executor           executor
+	signalChan         chan os.Signal
 }
 
 func (rn *runner) initialize() error {
@@ -59,27 +60,27 @@ func (rn *runner) finalize() error {
 	return nil
 }
 
-func (rn *runner) spawnWorker(r *rule, rq bool) {
-	go r.worker(rq)
+func (rn *runner) spawnWorker(r *rule, requeue bool) {
+	go r.worker(requeue)
 	log.Printf("%s: spawned worker", r.name)
 }
 
-func (rn *runner) execute(rq bool) {
+func (rn *runner) run(requeueWorkers bool) {
 	for _, r := range rn.configuration.Rules {
-		rn.spawnWorker(r, rq)
+		rn.spawnWorker(r, requeueWorkers)
 	}
 
-	ic := make(chan os.Signal, 1)
-	signal.Notify(ic, syscall.SIGINT, syscall.SIGTERM)
+	signal.Notify(rn.signalChan, syscall.SIGINT, syscall.SIGTERM)
+	defer func() {
+		signal.Stop(rn.signalChan)
+	}()
 	for {
 		select {
-		case <-ic:
-			return
-		case <-rn.cancelChan:
+		case <-rn.signalChan:
 			return
 		case r := <-rn.respawnWorkerChan:
 			time.Sleep(rn.respawnWorkerDelay)
-			rn.spawnWorker(r, rq)
+			rn.spawnWorker(r, requeueWorkers)
 		}
 	}
 }
@@ -87,8 +88,9 @@ func (rn *runner) execute(rq bool) {
 func newRunner(c *configuration) *runner {
 	return &runner{
 		configuration:      c,
-		cancelChan:         make(chan bool),
 		respawnWorkerDelay: 5 * time.Second,
 		respawnWorkerChan:  make(chan *rule),
+		executor:           &defaultExecutor{},
+		signalChan:         make(chan os.Signal, 1),
 	}
 }

@@ -1,11 +1,60 @@
 package main
 
 import (
+	"errors"
+	"io"
+	"reflect"
 	"testing"
 	"time"
 )
 
+var (
+	errFault = errors.New("fault")
+)
+
+type testFaultyExecutor struct {
+	// Actuator
+	name string
+	args []string
+
+	// Effect
+	output   string
+	exitCode int
+	err      error
+}
+
+func (e *testFaultyExecutor) execute(name string, args ...string) (string, int, error) {
+	return e.executeWithStd(nil, nil, name, args...)
+}
+
+func (e *testFaultyExecutor) executeWithStd(stdin io.Reader, stdout io.Writer, name string, args ...string) (string, int, error) {
+	if name == e.name && reflect.DeepEqual(args, e.args) {
+		return e.output, e.exitCode, e.err
+	}
+
+	de := &defaultExecutor{}
+	return de.executeWithStd(stdin, stdout, name, args...)
+}
+
+func newTestFaultyExecutor(output string, exitCode int, err error, name string, args ...string) *testFaultyExecutor {
+	return &testFaultyExecutor{
+		name:     name,
+		args:     args,
+		output:   output,
+		exitCode: exitCode,
+		err:      err,
+	}
+}
+
+func testError(t *testing.T, err error) {
+	t.Helper()
+	if err == nil {
+		t.Error("expected error")
+	}
+}
+
 func testNoError(t *testing.T, err error) {
+	t.Helper()
 	if err != nil {
 		t.Errorf("unexpected error: %s", err)
 	}

@@ -1,15 +1,23 @@
 package main
 
-import "testing"
+import (
+	"errors"
+	"testing"
+	"testing/iotest"
+)
 
 func TestConfigurationReadFileInvalid(t *testing.T) {
 	rc := func(n string) {
 		c := &configuration{}
-		if err := c.readFile(n); err == nil {
-			t.Error("expected error")
-		}
+		testError(t, c.readFile(n))
 	}
 
 	rc("")
 	rc("test/invalid_configuration.toml")
+}
+
+func TestConfigurationReadFileError(t *testing.T) {
+	r := iotest.ErrReader(errors.New(""))
+	c := &configuration{}
+	testError(t, c.read(r))
 }

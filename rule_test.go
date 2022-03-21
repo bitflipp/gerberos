@@ -4,7 +4,7 @@ import (
 	"testing"
 )
 
-func TestValidRules(t *testing.T) {
+func TestRulesValue(t *testing.T) {
 	rn, err := newTestRunner()
 	testNoError(t, err)
 
@@ -37,7 +37,7 @@ func TestValidRules(t *testing.T) {
 	})
 }
 
-func TestInvalidRules(t *testing.T) {
+func TestRulesInvalid(t *testing.T) {
 	rn, err := newTestRunner()
 	testNoError(t, err)
 
@@ -163,14 +163,4 @@ func TestInvalidRules(t *testing.T) {
 	ee("occurrences: invalid interval parameter", func(r *rule) {
 		r.Occurrences = []string{"5", "5g"}
 	})
-}
-
-func TestWorker(t *testing.T) {
-	rn, err := newTestRunner()
-	testNoError(t, err)
-	testNoError(t, rn.initialize())
-
-	r := newTestValidRule()
-	testNoError(t, r.initialize(rn))
-	r.worker(false)
 }
