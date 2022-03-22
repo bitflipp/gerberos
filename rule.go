@@ -58,6 +58,8 @@ func (r *rule) initializeSource() error {
 		r.source = &kernelSource{}
 	case "test":
 		r.source = &testSource{}
+	case "process":
+		r.source = &processSource{}
 	default:
 		return errors.New("unknown source")
 	}
