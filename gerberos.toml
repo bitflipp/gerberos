@@ -17,6 +17,7 @@ saveFilePath = "./gerberos.save"
     # - ["file", "<path to non-directory file>"] (using tail)
     # - ["systemd", "<name of systemd service>"] (using journalctl)
     # - ["kernel"] (using journalctl)
+    # - ["process", "<name>", "[any number of]", "[optional arguments]"]
     source = ["file", "/var/log/apache2/access.log"]
     # Required. "%ip%" must appear exactly once in
     # each main regexp (Golang flavor). "%ip%" will be

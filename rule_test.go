@@ -35,6 +35,9 @@ func TestRulesValue(t *testing.T) {
 	ir(func(r *rule) {
 		r.Source = []string{"kernel"}
 	})
+	ir(func(r *rule) {
+		r.Source = []string{"process", "kek", "se"}
+	})
 }
 
 func TestRulesInvalid(t *testing.T) {
@@ -126,6 +129,9 @@ func TestRulesInvalid(t *testing.T) {
 	})
 	ee("kernel source: superfluous parameter", func(r *rule) {
 		r.Source = []string{"kernel", "superfluous"}
+	})
+	ee("process source: missing name", func(r *rule) {
+		r.Source = []string{"process"}
 	})
 	ee("occurrences: missing count parameter", func(r *rule) {
 		r.Occurrences = []string{}

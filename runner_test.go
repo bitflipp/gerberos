@@ -357,6 +357,7 @@ func TestRunnerSources(t *testing.T) {
 	ts([]string{"file", "test/empty"})
 	ts([]string{"systemd", "service"})
 	ts([]string{"kernel"})
+	ts([]string{"process", "test/quitter"})
 }
 
 func TestRunnerWorkerActionFaulty(t *testing.T) {
