@@ -8,7 +8,7 @@ Minimal additional logic is applied. This is to adhere to the [Unix philosophy](
 
 ## Requirements
 
-- Go 1.17.8 (development only)
+- Go 1.18 (development only)
 - GNU Make 4.3 (development only, optional)
 
 ### ipset backend

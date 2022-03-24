@@ -4,6 +4,7 @@ import (
 	_ "embed"
 	"flag"
 	"log"
+	"runtime/debug"
 )
 
 //go:embed VERSION
@@ -15,6 +16,23 @@ func main() {
 
 	// Version
 	log.Printf("gerberos %s", version)
+	if bi, ok := debug.ReadBuildInfo(); ok {
+		log.Printf("go version: %s", bi.GoVersion)
+		for i := range bi.Settings {
+			switch bi.Settings[i].Key {
+			case "vcs.revision":
+				length := 7
+				if length > len(bi.Settings[i].Value) {
+					length = len(bi.Settings[i].Value)
+				}
+				log.Printf("revision: %s", bi.Settings[i].Value[:length])
+			case "vcs.modified":
+				log.Printf("modified files: %s", bi.Settings[i].Value)
+			}
+		}
+	} else {
+		log.Print("no build info found")
+	}
 
 	// Flags
 	cfp := flag.String("c", "./gerberos.toml", "Path to TOML configuration file")
