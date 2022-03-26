@@ -1,38 +1,47 @@
 package main
 
 import (
-	_ "embed"
 	"flag"
 	"log"
 	"runtime/debug"
 )
 
-//go:embed VERSION
-var version string
+var (
+	version = "unknown version"
+)
+
+func logBuildInfo() {
+	bi, ok := debug.ReadBuildInfo()
+	if !ok {
+		log.Print("no build info found")
+		return
+	}
+
+	log.Printf("build info:")
+	log.Printf("- built with: %s", bi.GoVersion)
+	for _, s := range bi.Settings {
+		switch s.Key {
+		case "vcs.revision":
+			l := 7
+			if len(s.Value) > 7 {
+				s.Value = s.Value[:l]
+			}
+			log.Printf("- revision: %s", s.Value)
+		case "vcs.modified":
+			if s.Value == "true" {
+				log.Printf("- source files were modified since last commit")
+			}
+		}
+	}
+}
 
 func main() {
 	// Logging
 	log.SetFlags(0)
 
-	// Version
+	// Version and build info
 	log.Printf("gerberos %s", version)
-	if bi, ok := debug.ReadBuildInfo(); ok {
-		log.Printf("go version: %s", bi.GoVersion)
-		for i := range bi.Settings {
-			switch bi.Settings[i].Key {
-			case "vcs.revision":
-				length := 7
-				if length > len(bi.Settings[i].Value) {
-					length = len(bi.Settings[i].Value)
-				}
-				log.Printf("revision: %s", bi.Settings[i].Value[:length])
-			case "vcs.modified":
-				log.Printf("modified files: %s", bi.Settings[i].Value)
-			}
-		}
-	} else {
-		log.Print("no build info found")
-	}
+	logBuildInfo()
 
 	// Flags
 	cfp := flag.String("c", "./gerberos.toml", "Path to TOML configuration file")
