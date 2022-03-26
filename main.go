@@ -39,7 +39,7 @@ func main() {
 	// Logging
 	log.SetFlags(0)
 
-	// Tag and build info
+	// Version and build info
 	log.Printf("gerberos %s", version)
 	logBuildInfo()
 
