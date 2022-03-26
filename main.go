@@ -18,7 +18,7 @@ func logBuildInfo() {
 			switch s.Key {
 			case "vcs.revision":
 				l := 7
-				if l > len(s.Value) {
+				if len(s.Value) > 7 {
 					s.Value = s.Value[:l]
 				}
 				log.Printf("- revision: %s", s.Value)
@@ -37,7 +37,7 @@ func main() {
 	// Logging
 	log.SetFlags(0)
 
-	// Version and build info
+	// Tag and build info
 	log.Printf("gerberos %s", tag)
 	logBuildInfo()
 
