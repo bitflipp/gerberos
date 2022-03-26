@@ -6,19 +6,40 @@ import (
 	"runtime/debug"
 )
 
-var tag = "?"
+var (
+	tag = "?"
+)
+
+func logBuildInfo() {
+	if bi, ok := debug.ReadBuildInfo(); ok {
+		log.Printf("build info:")
+		log.Printf("- built with: %s", bi.GoVersion)
+		for _, s := range bi.Settings {
+			switch s.Key {
+			case "vcs.revision":
+				l := 7
+				if l > len(s.Value) {
+					s.Value = s.Value[:l]
+				}
+				log.Printf("- revision: %s", s.Value)
+			case "vcs.modified":
+				if s.Value == "true" {
+					log.Printf("- source files were modified since last commit")
+				}
+			}
+		}
+	} else {
+		log.Print("no build info found")
+	}
+}
 
 func main() {
 	// Logging
 	log.SetFlags(0)
 
-	// Version
+	// Version and build info
 	log.Printf("gerberos %s", tag)
-	if bi, ok := debug.ReadBuildInfo(); ok {
-		log.Printf("built with: %s", bi.GoVersion)
-	} else {
-		log.Print("no build info found")
-	}
+	logBuildInfo()
 
 	// Flags
 	cfp := flag.String("c", "./gerberos.toml", "Path to TOML configuration file")
