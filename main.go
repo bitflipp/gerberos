@@ -1,35 +1,21 @@
 package main
 
 import (
-	_ "embed"
 	"flag"
 	"log"
 	"runtime/debug"
 )
 
-//go:embed VERSION
-var version string
+var tag = "?"
 
 func main() {
 	// Logging
 	log.SetFlags(0)
 
 	// Version
-	log.Printf("gerberos %s", version)
+	log.Printf("gerberos %s", tag)
 	if bi, ok := debug.ReadBuildInfo(); ok {
-		log.Printf("go version: %s", bi.GoVersion)
-		for i := range bi.Settings {
-			switch bi.Settings[i].Key {
-			case "vcs.revision":
-				length := 7
-				if length > len(bi.Settings[i].Value) {
-					length = len(bi.Settings[i].Value)
-				}
-				log.Printf("revision: %s", bi.Settings[i].Value[:length])
-			case "vcs.modified":
-				log.Printf("modified files: %s", bi.Settings[i].Value)
-			}
-		}
+		log.Printf("built with: %s", bi.GoVersion)
 	} else {
 		log.Print("no build info found")
 	}
