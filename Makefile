@@ -1,4 +1,4 @@
-TAG := $(shell git describe --tags $(shell git rev-list --tags --max-count=1))
+TAG := $(or $(shell git tag --points-at HEAD),dev)
 
 all: run
 
@@ -24,6 +24,3 @@ test: clean
 test_system: clean
 	go test -v -tags=system -coverprofile=gerberos.coverage
 	go tool cover -html=gerberos.coverage
-
-tag:
-	@echo $(TAG)
