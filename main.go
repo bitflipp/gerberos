@@ -7,7 +7,7 @@ import (
 )
 
 var (
-	tag = "?"
+	version = "unknown version"
 )
 
 func logBuildInfo() {
@@ -40,7 +40,7 @@ func main() {
 	log.SetFlags(0)
 
 	// Tag and build info
-	log.Printf("gerberos %s", tag)
+	log.Printf("gerberos %s", version)
 	logBuildInfo()
 
 	// Flags

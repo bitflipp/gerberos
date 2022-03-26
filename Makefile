@@ -1,4 +1,4 @@
-TAG := $(or $(shell git tag --points-at HEAD),dev)
+VERSION := $(or $(shell git tag --points-at HEAD),dev)
 
 all: run
 
@@ -8,11 +8,11 @@ clean:
 
 dist: clean
 	mkdir dist
-	CGO_ENABLED=0 go build -o dist/gerberos -ldflags "-X main.tag=$(TAG)"
+	CGO_ENABLED=0 go build -o dist/gerberos -ldflags "-X main.version=$(VERSION)"
 
 release: dist
 	cp -r licenses-third-party gerberos.toml gerberos.service LICENSE dist
-	cd dist && tar czvf gerberos-$(TAG).tar.gz *
+	cd dist && tar czvf gerberos-$(VERSION).tar.gz *
 
 run: dist
 	dist/gerberos
