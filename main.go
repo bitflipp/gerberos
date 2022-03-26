@@ -11,25 +11,27 @@ var (
 )
 
 func logBuildInfo() {
-	if bi, ok := debug.ReadBuildInfo(); ok {
-		log.Printf("build info:")
-		log.Printf("- built with: %s", bi.GoVersion)
-		for _, s := range bi.Settings {
-			switch s.Key {
-			case "vcs.revision":
-				l := 7
-				if len(s.Value) > 7 {
-					s.Value = s.Value[:l]
-				}
-				log.Printf("- revision: %s", s.Value)
-			case "vcs.modified":
-				if s.Value == "true" {
-					log.Printf("- source files were modified since last commit")
-				}
+	bi, ok := debug.ReadBuildInfo()
+	if !ok {
+		log.Print("no build info found")
+		return
+	}
+
+	log.Printf("build info:")
+	log.Printf("- built with: %s", bi.GoVersion)
+	for _, s := range bi.Settings {
+		switch s.Key {
+		case "vcs.revision":
+			l := 7
+			if len(s.Value) > 7 {
+				s.Value = s.Value[:l]
+			}
+			log.Printf("- revision: %s", s.Value)
+		case "vcs.modified":
+			if s.Value == "true" {
+				log.Printf("- source files were modified since last commit")
 			}
 		}
-	} else {
-		log.Print("no build info found")
 	}
 }
 
