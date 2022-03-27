@@ -1,8 +1,9 @@
-//go:build system
+// //go:build system
 
 package main
 
 import (
+	"fmt"
 	"os"
 	"os/exec"
 	"sync"
@@ -367,4 +368,27 @@ func TestRunnerWorkerActionFaulty(t *testing.T) {
 	r.Action = []string{"test"}
 	testNoError(t, rn.initialize())
 	testNoError(t, r.worker(false))
+}
+
+func TestRunnerManyRulesFlaky(t *testing.T) {
+	rn, err := newTestRunner()
+	testNoError(t, err)
+	delete(rn.configuration.Rules, "test")
+	cn := 1000
+	for i := 0; i < cn; i++ {
+		r := newTestValidRule()
+		r.Source = []string{"process", "test/trapper"}
+		rn.configuration.Rules[fmt.Sprintf("test-%d", i)] = r
+	}
+	rn.respawnWorkerDelay = 2 * time.Millisecond
+	testNoError(t, rn.initialize())
+	wg := &sync.WaitGroup{}
+	wg.Add(1)
+	go func() {
+		rn.run(true)
+		wg.Done()
+	}()
+	time.Sleep(4 * time.Second)
+	rn.signalChan <- os.Interrupt
+	wg.Wait()
 }

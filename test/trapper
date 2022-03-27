@@ -1,0 +1,9 @@
+#!/bin/bash
+
+trap -- "" SIGQUIT SIGHUP SIGINT SIGTERM SIGUSR1 SIGUSR2
+while true; do
+    sleep 1
+    if [[ $(( $RANDOM % 4 )) > 0 ]]; then
+        exit 1
+    fi
+done
