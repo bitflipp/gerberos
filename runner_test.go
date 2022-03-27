@@ -3,6 +3,7 @@
 package main
 
 import (
+	"fmt"
 	"os"
 	"os/exec"
 	"sync"
@@ -394,5 +395,28 @@ func TestRunnerDangelingProcessFlaky(t *testing.T) {
 	time.Sleep(1 * time.Second)
 	rn.stop()
 	time.Sleep(6 * time.Second)
+	wg.Wait()
+}
+
+func TestRunnerManyRulesFlaky(t *testing.T) {
+	rn, err := newTestRunner()
+	testNoError(t, err)
+	delete(rn.configuration.Rules, "test")
+	cn := 1000
+	for i := 0; i < cn; i++ {
+		r := newTestValidRule()
+		r.Source = []string{"process", "test/trapper"}
+		rn.configuration.Rules[fmt.Sprintf("test-%d", i)] = r
+	}
+	rn.respawnWorkerDelay = 2 * time.Millisecond
+	testNoError(t, rn.initialize())
+	wg := &sync.WaitGroup{}
+	wg.Add(1)
+	go func() {
+		rn.run(true)
+		wg.Done()
+	}()
+	time.Sleep(4 * time.Second)
+	rn.stop()
 	wg.Wait()
 }
