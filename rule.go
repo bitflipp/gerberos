@@ -9,6 +9,7 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
+	"syscall"
 	"time"
 )
 
@@ -225,6 +226,7 @@ func (r *rule) initialize(rn *runner) error {
 
 func (r *rule) processScanner(name string, args ...string) (chan *match, error) {
 	cmd := exec.Command(name, args...)
+	cmd.SysProcAttr = &syscall.SysProcAttr{Pdeathsig: syscall.SIGKILL}
 	o, err := cmd.StdoutPipe()
 	if err != nil {
 		return nil, err

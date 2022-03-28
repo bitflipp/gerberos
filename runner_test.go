@@ -328,7 +328,7 @@ func TestRunnerRulesWorkerInterrupt(t *testing.T) {
 	testNoError(t, rn.initialize())
 	r := rn.configuration.Rules["test"]
 	s := r.source.(*testSource)
-	s.processPath = "test/reader"
+	s.processPath = "test/trapper_forever"
 	wg := &sync.WaitGroup{}
 	wg.Add(1)
 	go func() {
@@ -379,7 +379,7 @@ func TestRunnerManyRulesFlaky(t *testing.T) {
 	cn := 100
 	for i := 0; i < cn; i++ {
 		r := newTestValidRule()
-		r.Source = []string{"process", "test/trapper"}
+		r.Source = []string{"process", "test/trapper_random"}
 		rn.configuration.Rules[fmt.Sprintf("test-%d", i)] = r
 	}
 	rn.respawnWorkerDelay = 2 * time.Millisecond
