@@ -298,8 +298,8 @@ func (r *rule) worker(requeue bool) error {
 	}
 
 	if requeue {
-		log.Printf("%s: queuing worker for respawn", r.name)
 		time.Sleep(r.runner.respawnWorkerDelay)
+		log.Printf("%s: queuing worker for respawn", r.name)
 		r.runner.respawnWorkerChan <- r
 	}
 
