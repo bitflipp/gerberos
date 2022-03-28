@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"os"
 	"os/exec"
 	"regexp"
 	"strconv"
@@ -224,6 +225,8 @@ func (r *rule) initialize(rn *runner) error {
 }
 
 func (r *rule) processScanner(name string, args ...string) (chan *match, error) {
+	stop := make(chan bool, 1)
+
 	cmd := exec.Command(name, args...)
 	o, err := cmd.StdoutPipe()
 	if err != nil {
@@ -238,6 +241,25 @@ func (r *rule) processScanner(name string, args ...string) (chan *match, error) 
 		return nil, err
 	}
 	log.Printf(`%s: scanning process stdout and stderr: "%s"`, r.name, cmd)
+
+	defer func() {
+		stop <- true
+		close(stop)
+	}()
+
+	go func() {
+		select {
+		case <-stop:
+		case <-r.runner.stopped.Done():
+		}
+		if cmd.Process != nil {
+			cmd.Process.Signal(os.Interrupt)
+			time.Sleep(5 * time.Second)
+			if !cmd.ProcessState.Exited() {
+				cmd.Process.Kill()
+			}
+		}
+	}()
 
 	c := make(chan *match, 1)
 	go func() {
@@ -299,7 +321,10 @@ func (r *rule) worker(requeue bool) error {
 
 	if requeue {
 		log.Printf("%s: queuing worker for respawn", r.name)
-		r.runner.respawnWorkerChan <- r
+		select {
+		case r.runner.respawnWorkerChan <- r:
+		case <-r.runner.stopped.Done():
+		}
 	}
 
 	return nil

@@ -118,7 +118,7 @@ func TestRunnerExecute(t *testing.T) {
 		testNoError(t, rn.finalize())
 		wg.Done()
 	}()
-	rn.signalChan <- os.Interrupt
+	rn.stop()
 	wg.Wait()
 }
 
@@ -136,7 +136,7 @@ func TestRunnerPerformAction(t *testing.T) {
 			testNoError(t, rn.finalize())
 			wg.Done()
 		}()
-		rn.signalChan <- os.Interrupt
+		rn.stop()
 		wg.Wait()
 	}
 
@@ -283,7 +283,7 @@ func TestRunnerRulesWorkerRequeue(t *testing.T) {
 		wg.Done()
 	}()
 	r.worker(true)
-	rn.signalChan <- os.Interrupt
+	rn.stop()
 	wg.Wait()
 }
 
@@ -316,7 +316,7 @@ func TestRunnerRulesWorkerInvalidProcess(t *testing.T) {
 		rn.run(false)
 		wg.Done()
 	}()
-	rn.signalChan <- os.Interrupt
+	rn.stop()
 	wg.Wait()
 }
 
@@ -333,7 +333,7 @@ func TestRunnerRulesWorkerInterrupt(t *testing.T) {
 		rn.run(false)
 		wg.Done()
 	}()
-	rn.signalChan <- os.Interrupt
+	rn.stop()
 	wg.Wait()
 }
 
@@ -350,7 +350,7 @@ func TestRunnerSources(t *testing.T) {
 			rn.run(false)
 			wg.Done()
 		}()
-		rn.signalChan <- os.Interrupt
+		rn.stop()
 		wg.Wait()
 	}
 
