@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"log"
@@ -16,7 +17,8 @@ type runner struct {
 	respawnWorkerDelay time.Duration
 	respawnWorkerChan  chan *rule
 	executor           executor
-	signalChan         chan os.Signal
+	stop               context.CancelFunc
+	stopped            context.Context
 }
 
 func (rn *runner) initialize() error {
@@ -61,7 +63,14 @@ func (rn *runner) finalize() error {
 }
 
 func (rn *runner) spawnWorker(r *rule, requeue bool) {
-	go r.worker(requeue)
+	go func() {
+		select {
+		case <-rn.stopped.Done():
+			return
+		default:
+			r.worker(requeue)
+		}
+	}()
 	log.Printf("%s: spawned worker", r.name)
 }
 
@@ -70,22 +79,38 @@ func (rn *runner) run(requeueWorkers bool) {
 		rn.spawnWorker(r, requeueWorkers)
 	}
 
+	signalChan := make(chan os.Signal, 1)
+	signal.Notify(signalChan, syscall.SIGINT, syscall.SIGTERM)
+
 	go func() {
-		for r := range rn.respawnWorkerChan {
-			rn.spawnWorker(r, requeueWorkers)
+		for {
+			select {
+			case r := <-rn.respawnWorkerChan:
+				time.Sleep(rn.respawnWorkerDelay)
+				rn.spawnWorker(r, requeueWorkers)
+			case <-rn.stopped.Done():
+				return
+			}
 		}
 	}()
 
-	signal.Notify(rn.signalChan, syscall.SIGINT, syscall.SIGTERM)
-	<-rn.signalChan
+	select {
+	case <-rn.stopped.Done():
+		return
+	case <-signalChan:
+		rn.stop()
+	}
+	signal.Stop(signalChan)
 }
 
 func newRunner(c *configuration) *runner {
+	ctx, cancel := context.WithCancel(context.Background())
 	return &runner{
 		configuration:      c,
 		respawnWorkerDelay: 5 * time.Second,
 		respawnWorkerChan:  make(chan *rule),
 		executor:           &defaultExecutor{},
-		signalChan:         make(chan os.Signal, 1),
+		stop:               cancel,
+		stopped:            ctx,
 	}
 }
