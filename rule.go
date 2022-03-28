@@ -250,7 +250,9 @@ func (r *rule) processScanner(name string, args ...string) (chan *match, error) 
 		if cmd.Process != nil {
 			cmd.Process.Signal(os.Interrupt)
 			time.Sleep(5 * time.Second)
-			if !cmd.ProcessState.Exited() {
+			select {
+			case <-stop:
+			default:
 				cmd.Process.Kill()
 			}
 		}

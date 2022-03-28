@@ -1,0 +1,6 @@
+#!/bin/bash
+
+trap -- "" SIGQUIT SIGHUP SIGINT SIGTERM SIGUSR1 SIGUSR2
+while true; do
+    sleep 1
+done

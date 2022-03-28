@@ -377,3 +377,22 @@ func TestRunnerWorkerActionFaulty(t *testing.T) {
 	testNoError(t, rn.initialize())
 	testNoError(t, r.worker(false))
 }
+
+func TestRunnerDangelingProcessFlaky(t *testing.T) {
+	rn, err := newTestRunner()
+	testNoError(t, err)
+	r := newTestValidRule()
+	r.Source = []string{"process", "test/stay"}
+	rn.configuration.Rules["test"] = r
+	testNoError(t, rn.initialize())
+	wg := &sync.WaitGroup{}
+	wg.Add(1)
+	go func() {
+		rn.run(true)
+		wg.Done()
+	}()
+	time.Sleep(1 * time.Second)
+	rn.stop()
+	time.Sleep(6 * time.Second)
+	wg.Wait()
+}
