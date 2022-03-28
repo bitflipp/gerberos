@@ -70,19 +70,14 @@ func (rn *runner) run(requeueWorkers bool) {
 		rn.spawnWorker(r, requeueWorkers)
 	}
 
-	signal.Notify(rn.signalChan, syscall.SIGINT, syscall.SIGTERM)
-	defer func() {
-		signal.Stop(rn.signalChan)
-	}()
-	for {
-		select {
-		case <-rn.signalChan:
-			return
-		case r := <-rn.respawnWorkerChan:
-			time.Sleep(rn.respawnWorkerDelay)
+	go func() {
+		for r := range rn.respawnWorkerChan {
 			rn.spawnWorker(r, requeueWorkers)
 		}
-	}
+	}()
+
+	signal.Notify(rn.signalChan, syscall.SIGINT, syscall.SIGTERM)
+	<-rn.signalChan
 }
 
 func newRunner(c *configuration) *runner {
