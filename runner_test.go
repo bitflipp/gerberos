@@ -3,6 +3,7 @@
 package main
 
 import (
+	"fmt"
 	"os"
 	"os/exec"
 	"sync"
@@ -118,7 +119,8 @@ func TestRunnerExecute(t *testing.T) {
 		testNoError(t, rn.finalize())
 		wg.Done()
 	}()
-	rn.signalChan <- os.Interrupt
+	time.Sleep(5 * time.Second)
+	rn.stop()
 	wg.Wait()
 }
 
@@ -136,15 +138,19 @@ func TestRunnerPerformAction(t *testing.T) {
 			testNoError(t, rn.finalize())
 			wg.Done()
 		}()
-		rn.signalChan <- os.Interrupt
+		time.Sleep(5 * time.Second)
+		rn.stop()
 		wg.Wait()
 	}
 
 	pa("ipset", []string{"log", "simple"})
+	pa("ipset", []string{"log", "extended"})
 	pa("ipset", []string{"ban", "1h"})
 	pa("nft", []string{"log", "simple"})
+	pa("nft", []string{"log", "extended"})
 	pa("nft", []string{"ban", "1h"})
 	pa("test", []string{"log", "simple"})
+	pa("nft", []string{"log", "extended"})
 	pa("test", []string{"ban", "1h"})
 }
 
@@ -283,7 +289,8 @@ func TestRunnerRulesWorkerRequeue(t *testing.T) {
 		wg.Done()
 	}()
 	r.worker(true)
-	rn.signalChan <- os.Interrupt
+	time.Sleep(5 * time.Second)
+	rn.stop()
 	wg.Wait()
 }
 
@@ -316,24 +323,8 @@ func TestRunnerRulesWorkerInvalidProcess(t *testing.T) {
 		rn.run(false)
 		wg.Done()
 	}()
-	rn.signalChan <- os.Interrupt
-	wg.Wait()
-}
-
-func TestRunnerRulesWorkerInterrupt(t *testing.T) {
-	rn, err := newTestRunner()
-	testNoError(t, err)
-	testNoError(t, rn.initialize())
-	r := rn.configuration.Rules["test"]
-	s := r.source.(*testSource)
-	s.processPath = "test/reader"
-	wg := &sync.WaitGroup{}
-	wg.Add(1)
-	go func() {
-		rn.run(false)
-		wg.Done()
-	}()
-	rn.signalChan <- os.Interrupt
+	time.Sleep(5 * time.Second)
+	rn.stop()
 	wg.Wait()
 }
 
@@ -350,7 +341,8 @@ func TestRunnerSources(t *testing.T) {
 			rn.run(false)
 			wg.Done()
 		}()
-		rn.signalChan <- os.Interrupt
+		time.Sleep(5 * time.Second)
+		rn.stop()
 		wg.Wait()
 	}
 
@@ -367,4 +359,53 @@ func TestRunnerWorkerActionFaulty(t *testing.T) {
 	r.Action = []string{"test"}
 	testNoError(t, rn.initialize())
 	testNoError(t, r.worker(false))
+}
+
+func TestRunnerDanglingProcessFlaky(t *testing.T) {
+	rn, err := newTestRunner()
+	testNoError(t, err)
+	r := newTestValidRule()
+	r.Source = []string{"process", "test/trapper_forever"}
+	rn.configuration.Rules["test"] = r
+	testNoError(t, rn.initialize())
+	wg := &sync.WaitGroup{}
+	wg.Add(1)
+	before, err := testCountChildren()
+	testNoError(t, err)
+	go func() {
+		rn.run(true)
+		wg.Done()
+	}()
+	time.Sleep(1 * time.Second)
+	rn.stop()
+	time.Sleep(6 * time.Second)
+	wg.Wait()
+	after, err := testCountChildren()
+	testNoError(t, err)
+	if after != before {
+		t.Errorf("Children not cleaned up. Before: %d; After: %d", before, after)
+	}
+}
+
+func TestRunnerManyRulesFlaky(t *testing.T) {
+	rn, err := newTestRunner()
+	testNoError(t, err)
+	delete(rn.configuration.Rules, "test")
+	cn := 100
+	for i := 0; i < cn; i++ {
+		r := newTestValidRule()
+		r.Source = []string{"process", "test/trapper_random"}
+		rn.configuration.Rules[fmt.Sprintf("test-%d", i)] = r
+	}
+	rn.respawnWorkerDelay = 2 * time.Millisecond
+	testNoError(t, rn.initialize())
+	wg := &sync.WaitGroup{}
+	wg.Add(1)
+	go func() {
+		rn.run(true)
+		wg.Done()
+	}()
+	time.Sleep(4 * time.Second)
+	rn.stop()
+	wg.Wait()
 }
