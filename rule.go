@@ -5,11 +5,11 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"os"
 	"os/exec"
 	"regexp"
 	"strconv"
 	"strings"
-	"syscall"
 	"time"
 )
 
@@ -225,8 +225,9 @@ func (r *rule) initialize(rn *runner) error {
 }
 
 func (r *rule) processScanner(name string, args ...string) (chan *match, error) {
+	stop := make(chan bool, 1)
+
 	cmd := exec.Command(name, args...)
-	cmd.SysProcAttr = &syscall.SysProcAttr{Pdeathsig: syscall.SIGKILL}
 	o, err := cmd.StdoutPipe()
 	if err != nil {
 		return nil, err
@@ -241,8 +242,29 @@ func (r *rule) processScanner(name string, args ...string) (chan *match, error) 
 	}
 	log.Printf(`%s: scanning process stdout and stderr: "%s"`, r.name, cmd)
 
+	go func() {
+		select {
+		case <-stop:
+		case <-r.runner.stopped.Done():
+		}
+		if cmd.Process != nil {
+			cmd.Process.Signal(os.Interrupt)
+			time.Sleep(5 * time.Second)
+			select {
+			case <-stop:
+			default:
+				cmd.Process.Kill()
+			}
+		}
+	}()
+
 	c := make(chan *match, 1)
 	go func() {
+		defer func() {
+			stop <- true
+			close(stop)
+		}()
+
 		sc := bufio.NewScanner(o)
 		for sc.Scan() {
 			if m, err := r.match(sc.Text()); err == nil {

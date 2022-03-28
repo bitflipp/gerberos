@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"io"
 	"os/exec"
-	"syscall"
 )
 
 type executor interface {
@@ -22,7 +21,6 @@ func (e *defaultExecutor) executeWithStd(stdin io.Reader, stdout io.Writer, name
 	cmd := exec.Command(name, args...)
 	cmd.Stdin = stdin
 	cmd.Stdout = stdout
-	cmd.SysProcAttr = &syscall.SysProcAttr{Pdeathsig: syscall.SIGKILL}
 	var (
 		b   []byte
 		err error
