@@ -388,6 +388,8 @@ func TestRunnerDangelingProcessFlaky(t *testing.T) {
 	testNoError(t, rn.initialize())
 	wg := &sync.WaitGroup{}
 	wg.Add(1)
+	before, err := countChildren()
+	testNoError(t, err)
 	go func() {
 		rn.run(true)
 		wg.Done()
@@ -396,6 +398,11 @@ func TestRunnerDangelingProcessFlaky(t *testing.T) {
 	rn.stop()
 	time.Sleep(6 * time.Second)
 	wg.Wait()
+	after, err := countChildren()
+	testNoError(t, err)
+	if after != before {
+		t.Errorf("Children not cleaned up. Before: %d; After: %d", before, after)
+	}
 }
 
 func TestRunnerManyRulesFlaky(t *testing.T) {

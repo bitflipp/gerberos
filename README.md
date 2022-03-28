@@ -10,6 +10,7 @@ Minimal additional logic is applied. This is to adhere to the [Unix philosophy](
 
 - Go 1.18 (development only)
 - GNU Make 4.3 (development only, optional)
+- pgrep (system test only, optional)
 
 ### ipset backend
 

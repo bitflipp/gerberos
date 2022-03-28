@@ -3,7 +3,10 @@ package main
 import (
 	"errors"
 	"io"
+	"os"
+	"os/exec"
 	"reflect"
+	"strconv"
 	"testing"
 	"time"
 )
@@ -89,4 +92,19 @@ func newTestValidRule() *rule {
 
 func newTestOccurrences() *occurrences {
 	return newOccurrences(100*time.Millisecond, 10)
+}
+
+func countChildren() (int, error) {
+	cmd := exec.Command("pgrep", "-P", strconv.Itoa(os.Getpid()))
+	b, err := cmd.CombinedOutput()
+	if err != nil {
+		return 0, nil // Probably no children
+	}
+	child := 0
+	for i := range b {
+		if b[i] == '\n' {
+			child++
+		}
+	}
+	return child, nil
 }

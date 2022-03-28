@@ -22,5 +22,5 @@ test: clean
 	go tool cover -html=gerberos.coverage
 
 test_system: clean
-	go test -v -tags=system -coverprofile=gerberos.coverage
+	go test -v -run TestRunnerDangelingProcessFlaky -tags=system -coverprofile=gerberos.coverage
 	go tool cover -html=gerberos.coverage
