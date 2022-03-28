@@ -136,6 +136,7 @@ func TestRunnerPerformAction(t *testing.T) {
 			testNoError(t, rn.finalize())
 			wg.Done()
 		}()
+		time.Sleep(100 * time.Millisecond)
 		rn.stop()
 		wg.Wait()
 	}
@@ -333,6 +334,7 @@ func TestRunnerRulesWorkerInterrupt(t *testing.T) {
 		rn.run(false)
 		wg.Done()
 	}()
+	time.Sleep(100 * time.Millisecond)
 	rn.stop()
 	wg.Wait()
 }

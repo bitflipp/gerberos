@@ -80,12 +80,7 @@ func (rn *runner) run(requeueWorkers bool) {
 	}
 
 	signalChan := make(chan os.Signal, 1)
-
 	signal.Notify(signalChan, syscall.SIGINT, syscall.SIGTERM)
-
-	defer func() {
-		signal.Stop(signalChan)
-	}()
 
 	go func() {
 		for {
@@ -99,14 +94,13 @@ func (rn *runner) run(requeueWorkers bool) {
 		}
 	}()
 
-	signal.Notify(signalChan, syscall.SIGINT, syscall.SIGTERM)
-
 	select {
 	case <-rn.stopped.Done():
 		return
 	case <-signalChan:
 		rn.stop()
 	}
+	signal.Stop(signalChan)
 }
 
 func newRunner(c *configuration) *runner {
