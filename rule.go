@@ -242,11 +242,6 @@ func (r *rule) processScanner(name string, args ...string) (chan *match, error) 
 	}
 	log.Printf(`%s: scanning process stdout and stderr: "%s"`, r.name, cmd)
 
-	defer func() {
-		stop <- true
-		close(stop)
-	}()
-
 	go func() {
 		select {
 		case <-stop:
@@ -263,6 +258,11 @@ func (r *rule) processScanner(name string, args ...string) (chan *match, error) 
 
 	c := make(chan *match, 1)
 	go func() {
+		defer func() {
+			stop <- true
+			close(stop)
+		}()
+
 		sc := bufio.NewScanner(o)
 		for sc.Scan() {
 			if m, err := r.match(sc.Text()); err == nil {
