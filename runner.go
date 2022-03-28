@@ -81,7 +81,7 @@ func (rn *runner) run(requeueWorkers bool) {
 
 	signalChan := make(chan os.Signal, 1)
 
-	signal.Notify(signalChan, syscall.SIGINT, syscall.SIGTERM)
+	signal.Notify(signalChan, os.Interrupt, syscall.SIGTERM)
 
 	defer func() {
 		signal.Stop(signalChan)
@@ -98,8 +98,6 @@ func (rn *runner) run(requeueWorkers bool) {
 			}
 		}
 	}()
-
-	signal.Notify(signalChan, syscall.SIGINT, syscall.SIGTERM)
 
 	select {
 	case <-rn.stopped.Done():
