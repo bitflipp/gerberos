@@ -402,7 +402,7 @@ func TestRunnerManyRulesFlaky(t *testing.T) {
 	rn, err := newTestRunner()
 	testNoError(t, err)
 	delete(rn.configuration.Rules, "test")
-	cn := 1000
+	cn := 100
 	for i := 0; i < cn; i++ {
 		r := newTestValidRule()
 		r.Source = []string{"process", "test/trapper"}
