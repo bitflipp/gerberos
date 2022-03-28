@@ -328,24 +328,6 @@ func TestRunnerRulesWorkerInvalidProcess(t *testing.T) {
 	wg.Wait()
 }
 
-func TestRunnerRulesWorkerInterrupt(t *testing.T) {
-	rn, err := newTestRunner()
-	testNoError(t, err)
-	testNoError(t, rn.initialize())
-	r := rn.configuration.Rules["test"]
-	s := r.source.(*testSource)
-	s.processPath = "test/trapper_forever"
-	wg := &sync.WaitGroup{}
-	wg.Add(1)
-	go func() {
-		rn.run(false)
-		wg.Done()
-	}()
-	time.Sleep(5 * time.Second)
-	rn.stop()
-	wg.Wait()
-}
-
 func TestRunnerSources(t *testing.T) {
 	ts := func(s []string) {
 		rn, err := newTestRunner()
