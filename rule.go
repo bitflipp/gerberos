@@ -322,7 +322,6 @@ func (r *rule) worker(requeue bool) error {
 	}
 
 	if requeue {
-		time.Sleep(r.runner.respawnWorkerDelay)
 		log.Printf("%s: queuing worker for respawn", r.name)
 		select {
 		case r.runner.respawnWorkerChan <- r:
