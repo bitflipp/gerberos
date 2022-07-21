@@ -12,33 +12,28 @@ verbose = true
 saveFilePath = "./gerberos.save"
 
 [rules]
-    [rules.apache-fuzzing]
+    [rules.ufw]
     # Required. Available sources are
     # - ["file", "<path to non-directory file>"] (using tail)
     # - ["systemd", "<name of systemd service>"] (using journalctl)
     # - ["kernel"] (using journalctl)
     # - ["process", "<name>", "[any number of]", "[optional arguments]"]
-    source = ["file", "/var/log/apache2/access.log"]
+    source = ["file", "/var/log/syslog"]
     # Required. "%ip%" must appear exactly once in
     # each main regexp (Golang flavor). "%ip%" will be
     # replaced with the following subexpression named
     # "ip" matching IPv4 and IPv6 addresses:
     # (?P<ip>(\d?\d?\d\.){3}\d?\d?\d|\[?([0-9A-Fa-f]{0,4}::?)
     # {1,6}[0-9A-Fa-f]{0,4}::?[0-9A-Fa-f]{0,4})\]?
-    regexp = ['%ip%.*\s40(0|8) 0 "-" "-"']
+    regexp = ['\[UFW BLOCK\].*?MAC= SRC=%ip%.*?DPT=\d+.*SYN']
     # Required. Available actions are
     # - ["ban", "<value parsable by time.ParseDuration>"]
     # - ["log", "<simple|extended>"]
-    action = ["log", "extended"]
+    action = ["ban", "3h"]
     # Optional. In this case, the action will be
     # performed once the same match has occurred 5
     # times within 10 seconds, resetting the counter.
-    occurrences = ["5", "10s"]
-
-    [rules.sshd-invalid-user]
-    source = ["file", "/var/log/auth.log"]
-    regexp = ['Invalid user.*\s%ip%']
-    action = ["ban", "24h"]
+    occurrences = ["3", "5m"]
 
     # Example aggregate rule for radicale.
     # Needs radicale logging -> level = info.
@@ -46,8 +41,8 @@ saveFilePath = "./gerberos.save"
     source = ["systemd", "radicale"]
     # If the aggregate option is used, "%id% must
     # appear exactly once in each main regexp in
-    # addition to "%ip%". "%ip%" will be replaced
-    # with the following subexpression named "ip":
+    # addition to "%ip%". "%id%" will be replaced
+    # with the following subexpression named "id":
     # (?P<id>(.*))
     # Please note that this subexpression matches 
     # greedily.
