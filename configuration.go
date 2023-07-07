@@ -13,6 +13,7 @@ type configuration struct {
 	Verbose      bool
 	Backend      string
 	SaveFilePath string
+	LogFilePath  string
 	Rules        map[string]*rule
 }
 
