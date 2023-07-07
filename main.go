@@ -56,7 +56,7 @@ func main() {
 			log.Fatalf("failed to open log file: %s", err)
 		}
 		defer lf.Close()
-		lw := logWriter{
+		lw := rfcPrefixWriter{
 			clock:  &realTimeClock{},
 			writer: lf,
 		}

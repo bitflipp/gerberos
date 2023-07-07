@@ -14,10 +14,10 @@ func (c *mockClock) now() time.Time {
 	return c.time
 }
 
-func TestLogWriter(t *testing.T) {
+func TestRFCPrefixWriter(t *testing.T) {
 	tm := time.Date(1984, 1, 15, 21, 34, 15, 0, time.UTC)
 	b := bytes.Buffer{}
-	lw := logWriter{
+	lw := rfcPrefixWriter{
 		clock:  &mockClock{time: tm},
 		writer: &b,
 	}
