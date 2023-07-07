@@ -62,7 +62,11 @@ func main() {
 			log.Fatalf("failed to open log file: %s", err)
 		}
 		defer lf.Close()
-		log.SetOutput(io.MultiWriter(os.Stderr, lf))
+		lw := logWriter{
+			clock:  &realTimeClock{},
+			writer: lf,
+		}
+		log.SetOutput(io.MultiWriter(os.Stderr, lw))
 	}
 
 	// Runner
