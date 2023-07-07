@@ -38,7 +38,7 @@ func (a *banAction) initialize(r *rule) error {
 }
 
 func (a *banAction) perform(m *match) error {
-	err := a.rule.runner.backend.Ban(m.ip, m.ipv6, a.duration)
+	err := a.rule.runner.backend.ban(m.ip, m.ipv6, a.duration)
 	if err != nil {
 		log.Printf(`%s: failed to ban IP %s: %s`, a.rule.name, m.ip, err)
 	} else {
