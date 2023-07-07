@@ -66,7 +66,6 @@ func (rn *runner) spawnWorker(r *rule, requeue bool) {
 	go func() {
 		select {
 		case <-rn.stopped.Done():
-			return
 		default:
 			r.worker(requeue)
 		}
@@ -97,8 +96,8 @@ func (rn *runner) run(requeueWorkers bool) {
 
 	select {
 	case <-rn.stopped.Done():
-		return
-	case <-signalChan:
+	case s := <-signalChan:
+		log.Printf("received signal: %s", s)
 		rn.stop()
 	}
 }
