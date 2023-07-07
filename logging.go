@@ -15,12 +15,12 @@ func (c *realTimeClock) now() time.Time {
 	return time.Now()
 }
 
-type logWriter struct {
+type rfcPrefixWriter struct {
 	clock  clock
 	writer io.Writer
 }
 
-func (l logWriter) Write(p []byte) (n int, err error) {
+func (l rfcPrefixWriter) Write(p []byte) (n int, err error) {
 	ts := []byte(l.clock.now().Format(time.RFC3339) + " ")
 	return l.writer.Write(append(ts, p...))
 }
