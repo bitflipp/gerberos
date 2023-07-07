@@ -2,7 +2,9 @@ package main
 
 import (
 	"flag"
+	"io"
 	"log"
+	"os"
 	"runtime/debug"
 )
 
@@ -51,6 +53,16 @@ func main() {
 	c := &configuration{}
 	if err := c.readFile(*cfp); err != nil {
 		log.Fatalf("failed to read configuration file: %s", err)
+	}
+
+	// Log file
+	if c.LogFilePath != "" {
+		lf, err := os.OpenFile(c.LogFilePath, os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0644)
+		if err != nil {
+			log.Fatalf("failed to open log file: %s", err)
+		}
+		defer lf.Close()
+		log.SetOutput(io.MultiWriter(os.Stderr, lf))
 	}
 
 	// Runner
