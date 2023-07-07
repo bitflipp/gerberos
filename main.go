@@ -38,13 +38,6 @@ func logBuildInfo() {
 }
 
 func main() {
-	// Logging
-	log.SetFlags(0)
-
-	// Version and build info
-	log.Printf("gerberos %s", version)
-	logBuildInfo()
-
 	// Flags
 	cfp := flag.String("c", "./gerberos.toml", "Path to TOML configuration file")
 	flag.Parse()
@@ -55,7 +48,8 @@ func main() {
 		log.Fatalf("failed to read configuration file: %s", err)
 	}
 
-	// Log file
+	// Logging
+	log.SetFlags(0)
 	if c.LogFilePath != "" {
 		lf, err := os.OpenFile(c.LogFilePath, os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0644)
 		if err != nil {
@@ -68,6 +62,10 @@ func main() {
 		}
 		log.SetOutput(io.MultiWriter(os.Stderr, lw))
 	}
+
+	// Version and build info
+	log.Printf("gerberos %s", version)
+	logBuildInfo()
 
 	// Runner
 	rn := newRunner(c)
