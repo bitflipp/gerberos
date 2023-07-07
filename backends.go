@@ -10,9 +10,9 @@ import (
 )
 
 type backend interface {
-	Initialize() error
-	Ban(ip string, ipv6 bool, d time.Duration) error
-	Finalize() error
+	initialize() error
+	ban(ip string, ipv6 bool, d time.Duration) error
+	finalize() error
 }
 
 type ipsetBackend struct {
@@ -124,7 +124,7 @@ func (b *ipsetBackend) restoreIpsets() error {
 	return nil
 }
 
-func (b *ipsetBackend) Initialize() error {
+func (b *ipsetBackend) initialize() error {
 	b.chainName = "gerberos"
 	b.ipset4Name = "gerberos4"
 	b.ipset6Name = "gerberos6"
@@ -174,7 +174,7 @@ func (b *ipsetBackend) Initialize() error {
 	return nil
 }
 
-func (b *ipsetBackend) Ban(ip string, ipv6 bool, d time.Duration) error {
+func (b *ipsetBackend) ban(ip string, ipv6 bool, d time.Duration) error {
 	s := b.ipset4Name
 	if ipv6 {
 		s = b.ipset6Name
@@ -188,7 +188,7 @@ func (b *ipsetBackend) Ban(ip string, ipv6 bool, d time.Duration) error {
 	return nil
 }
 
-func (b *ipsetBackend) Finalize() error {
+func (b *ipsetBackend) finalize() error {
 	if b.runner.configuration.SaveFilePath != "" {
 		if err := b.saveIpsets(); err != nil {
 			return fmt.Errorf(`failed to save ipsets to "%s": %w`, b.runner.configuration.SaveFilePath, err)
@@ -279,7 +279,7 @@ func (b *nftBackend) restoreSets() error {
 	return err
 }
 
-func (b *nftBackend) Initialize() error {
+func (b *nftBackend) initialize() error {
 	b.table4Name = "gerberos4"
 	b.table6Name = "gerberos6"
 	b.set4Name = "set4"
@@ -310,7 +310,7 @@ func (b *nftBackend) Initialize() error {
 	return nil
 }
 
-func (b *nftBackend) Ban(ip string, ipv6 bool, d time.Duration) error {
+func (b *nftBackend) ban(ip string, ipv6 bool, d time.Duration) error {
 	ds := int64(d.Seconds())
 
 	t, tn, sn := "ip", b.table4Name, b.set4Name
@@ -330,7 +330,7 @@ func (b *nftBackend) Ban(ip string, ipv6 bool, d time.Duration) error {
 	return nil
 }
 
-func (b *nftBackend) Finalize() error {
+func (b *nftBackend) finalize() error {
 	if b.runner.configuration.SaveFilePath != "" {
 		if err := b.saveSets(); err != nil {
 			return fmt.Errorf(`failed to save sets to "%s": %w`, b.runner.configuration.SaveFilePath, err)
@@ -351,14 +351,14 @@ type testBackend struct {
 	finalizeErr   error
 }
 
-func (b *testBackend) Initialize() error {
+func (b *testBackend) initialize() error {
 	return b.initializeErr
 }
 
-func (b *testBackend) Ban(ip string, ipv6 bool, d time.Duration) error {
+func (b *testBackend) ban(ip string, ipv6 bool, d time.Duration) error {
 	return b.banErr
 }
 
-func (b *testBackend) Finalize() error {
+func (b *testBackend) finalize() error {
 	return b.finalizeErr
 }

@@ -39,7 +39,7 @@ func (rn *runner) initialize() error {
 	default:
 		return fmt.Errorf("unknown backend: %s", rn.configuration.Backend)
 	}
-	if err := rn.backend.Initialize(); err != nil {
+	if err := rn.backend.initialize(); err != nil {
 		return fmt.Errorf("failed to initialize backend: %w", err)
 	}
 
@@ -55,7 +55,7 @@ func (rn *runner) initialize() error {
 }
 
 func (rn *runner) finalize() error {
-	if err := rn.backend.Finalize(); err != nil {
+	if err := rn.backend.finalize(); err != nil {
 		return fmt.Errorf("failed to finalize backend: %w", err)
 	}
 
