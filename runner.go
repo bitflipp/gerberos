@@ -39,7 +39,7 @@ func (rn *runner) initialize() error {
 	default:
 		return fmt.Errorf("unknown backend: %s", rn.configuration.Backend)
 	}
-	if err := rn.backend.Initialize(); err != nil {
+	if err := rn.backend.initialize(); err != nil {
 		return fmt.Errorf("failed to initialize backend: %w", err)
 	}
 
@@ -55,7 +55,7 @@ func (rn *runner) initialize() error {
 }
 
 func (rn *runner) finalize() error {
-	if err := rn.backend.Finalize(); err != nil {
+	if err := rn.backend.finalize(); err != nil {
 		return fmt.Errorf("failed to finalize backend: %w", err)
 	}
 
@@ -66,7 +66,6 @@ func (rn *runner) spawnWorker(r *rule, requeue bool) {
 	go func() {
 		select {
 		case <-rn.stopped.Done():
-			return
 		default:
 			r.worker(requeue)
 		}
@@ -97,8 +96,8 @@ func (rn *runner) run(requeueWorkers bool) {
 
 	select {
 	case <-rn.stopped.Done():
-		return
-	case <-signalChan:
+	case s := <-signalChan:
+		log.Printf("received signal: %s", s)
 		rn.stop()
 	}
 }
