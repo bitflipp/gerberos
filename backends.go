@@ -3,6 +3,7 @@ package main
 import (
 	"errors"
 	"fmt"
+	"net"
 	"os"
 	"os/exec"
 	"time"
@@ -12,7 +13,7 @@ import (
 
 type backend interface {
 	initialize() error
-	ban(ip string, ipv6 bool, d time.Duration) error
+	ban(ip net.IP, ipv6 bool, d time.Duration) error
 	finalize() error
 }
 
@@ -175,14 +176,14 @@ func (b *ipsetBackend) initialize() error {
 	return nil
 }
 
-func (b *ipsetBackend) ban(ip string, ipv6 bool, d time.Duration) error {
+func (b *ipsetBackend) ban(ip net.IP, ipv6 bool, d time.Duration) error {
 	s := b.ipset4Name
 	if ipv6 {
 		s = b.ipset6Name
 	}
 	ds := int64(d.Seconds())
-	if _, _, err := b.runner.executor.execute("ipset", "test", s, ip); err != nil {
-		if _, _, err := b.runner.executor.execute("ipset", "add", s, ip, "timeout", fmt.Sprint(ds)); err != nil {
+	if _, _, err := b.runner.executor.execute("ipset", "test", s, ip.String()); err != nil {
+		if _, _, err := b.runner.executor.execute("ipset", "add", s, ip.String(), "timeout", fmt.Sprint(ds)); err != nil {
 			return err
 		}
 	}
@@ -311,7 +312,7 @@ func (b *nftBackend) initialize() error {
 	return nil
 }
 
-func (b *nftBackend) ban(ip string, ipv6 bool, d time.Duration) error {
+func (b *nftBackend) ban(ip net.IP, ipv6 bool, d time.Duration) error {
 	ds := int64(d.Seconds())
 
 	t, tn, sn := "ip", b.table4Name, b.set4Name
@@ -356,7 +357,7 @@ func (b *testBackend) initialize() error {
 	return b.initializeErr
 }
 
-func (b *testBackend) ban(ip string, ipv6 bool, d time.Duration) error {
+func (b *testBackend) ban(ip net.IP, ipv6 bool, d time.Duration) error {
 	return b.banErr
 }
 

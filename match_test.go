@@ -3,7 +3,6 @@ package main
 import (
 	"regexp"
 	"testing"
-	"time"
 )
 
 func TestMatches(t *testing.T) {
@@ -51,7 +50,7 @@ func TestMatches(t *testing.T) {
 	// IPv4/6
 	em := func(s, h string, ipv6 bool) {
 		m := ml(s, "%ip%", true, h)
-		if h != m.ip {
+		if h != m.ip.String() {
 			t.Errorf(`%s: expected IP "%s", got "%s"`, s, h, m.ip)
 		}
 		if ipv6 != m.ipv6 {
@@ -97,60 +96,18 @@ func TestMatches(t *testing.T) {
 	em("valid 6.3", "3ab9:1ea0:c269:5aad:b716:c28d:237d:4d8f", true)
 	em("valid 6.4", "affe::affe", true)
 	em("valid 6.5", "1a::1a", true)
-	em("valid 6.6", "1200:0000:AB00:1234:0000:2552:7777:1313", true)
-	em("valid 6.7", "21DA:D3:0:2F3B:2AA:FF:FE28:9C5A", true)
+	em("valid 6.6", "1200:0:ab00:1234:0:2552:7777:1313", true)
+	em("valid 6.7", "21da:d3:0:2f3b:2aa:ff:fe28:9c5a", true)
 	em("valid 6.8", "::1", true)
 	mla("valid 6.9", true, "::1 id", "a id")
 	mla("valid 6.10", true, "::1 id", "id b")
 
 	ml("valid [6.1]", "a %ip% b", true, "a [1200:0000:AB00:1234:0000:2552:7777:1313] b")
-	ml("valid [6.2]", "a %ip% b", true, "a [affe::affe] b")
+	ml("valid [6.2]", "a %ip% b", true, "a [AFFE::AFFE] b")
 	ml("valid [6.3]", "a %ip% b", true, "a [::1] b")
 	ml("invalid [6.1]", "a %ip% b", false, "a [affe:affe] b")
 	ml("invalid [6.2]", "a %ip% b", false, "a [1a:1a] b")
 	ml("invalid [6.3]", "a %ip% b", false, "a [3ab9:1ea0:c269:5aad:b716:c28d:237d:4d8f:3ab9:1ea0:c269:5aad:b716:c28d:237d:4d8f] b")
-}
-
-func TestMatchesStringer(t *testing.T) {
-	m := &match{
-		time:   time.Time{},
-		line:   "line",
-		ip:     "123.123.123.123",
-		ipv6:   false,
-		regexp: regexp.MustCompile("regexp"),
-	}
-
-	ess := `time = 0001-01-01T00:00:00Z, IP = "123.123.123.123", IPv4`
-	gss := m.stringSimple()
-	if gss != ess {
-		t.Errorf(`expected: "%s", got "%s"`, ess, gss)
-	}
-
-	ese := `time = 0001-01-01T00:00:00Z, IP = "123.123.123.123", IPv4, line = "line", regexp = "regexp"`
-	gse := m.stringExtended()
-	if gss != ess {
-		t.Errorf(`expected: "%s", got "%s"`, ese, gse)
-	}
-
-	es := m.stringSimple()
-	gs := m.String()
-	if gss != ess {
-		t.Errorf(`expected: "%s", got "%s"`, es, gs)
-	}
-
-	m6 := &match{
-		time:   time.Time{},
-		line:   "line",
-		ip:     "1:5ee:bad:c0de",
-		ipv6:   true,
-		regexp: regexp.MustCompile("regexp"),
-	}
-
-	ese6 := `time = 0001-01-01T00:00:00Z, IP = "1:5ee:bad:c0de", IPv6, line = "line", regexp = "regexp"`
-	gse6 := m6.stringExtended()
-	if ese6 != gse6 {
-		t.Errorf(`expected: "%s", got "%s"`, ese6, gse6)
-	}
 }
 
 func TestMatchesAggregateInvalid(t *testing.T) {

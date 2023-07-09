@@ -5,6 +5,7 @@ all: run
 clean:
 	rm -rf dist
 	rm -rf *.coverage
+	rm -rf *.save
 
 dist: clean
 	mkdir dist

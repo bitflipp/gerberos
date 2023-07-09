@@ -1,12 +1,13 @@
 package main
 
 import (
+	"net"
 	"testing"
 	"time"
 )
 
 func TestOccurrencesFlaky(t *testing.T) {
-	h := "123.123.123.123"
+	h := net.ParseIP("123.123.123.123")
 
 	o := newTestOccurrences()
 	for i := 0; i < 9; i++ {

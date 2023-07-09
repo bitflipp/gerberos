@@ -14,7 +14,7 @@ import (
 type match struct {
 	time   time.Time
 	line   string
-	ip     string
+	ip     net.IP
 	ipv6   bool
 	regexp *regexp.Regexp
 }
@@ -42,7 +42,7 @@ func (r *rule) matchSimple(line string) (*match, error) {
 		return &match{
 			line:   line,
 			time:   time.Now(),
-			ip:     h,
+			ip:     net.ParseIP(h),
 			ipv6:   ph.To4() == nil,
 			regexp: re,
 		}, nil
@@ -76,7 +76,7 @@ func (r *rule) matchAggregate(line string) (*match, error) {
 			return &match{
 				line:   line,
 				time:   time.Now(),
-				ip:     ip.String(),
+				ip:     ip,
 				ipv6:   ip.To4() == nil,
 				regexp: re,
 			}, nil
@@ -135,21 +135,4 @@ func (r *rule) match(line string) (*match, error) {
 	}
 
 	return r.matchSimple(line)
-}
-
-func (m match) stringSimple() string {
-	ipv := "IPv4"
-	if m.ipv6 {
-		ipv = "IPv6"
-	}
-
-	return fmt.Sprintf(`time = %s, IP = "%s", %s`, m.time.Format(time.RFC3339), m.ip, ipv)
-}
-
-func (m match) stringExtended() string {
-	return fmt.Sprintf(`%s, line = "%s", regexp = "%s"`, m, m.line, m.regexp)
-}
-
-func (m match) String() string {
-	return m.stringSimple()
 }

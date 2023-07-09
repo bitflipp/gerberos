@@ -41,9 +41,9 @@ func (a *banAction) initialize(r *rule) error {
 func (a *banAction) perform(m *match) error {
 	err := a.rule.runner.backend.ban(m.ip, m.ipv6, a.duration)
 	if err != nil {
-		log.Warn().Str("rule", a.rule.name).Str("ip", m.ip).Err(err).Msg("failed to ban IP")
+		log.Warn().Str("rule", a.rule.name).IPAddr("ip", m.ip).Err(err).Msg("failed to ban IP")
 	} else {
-		log.Info().Str("rule", a.rule.name).Str("ip", m.ip).Dur("duration", a.duration).Msg("banned IP")
+		log.Info().Str("rule", a.rule.name).IPAddr("ip", m.ip).Dur("duration", a.duration).Msg("banned IP")
 	}
 
 	return err
@@ -78,13 +78,11 @@ func (a *logAction) initialize(r *rule) error {
 }
 
 func (a *logAction) perform(m *match) error {
-	var ms string
+	ev := log.Info().Str("rule", a.rule.name).Bool("ipv6", m.ipv6).Time("time", m.time).IPAddr("ip", m.ip)
 	if a.extended {
-		ms = m.stringExtended()
-	} else {
-		ms = m.stringSimple()
+		ev = ev.Str("line", m.line).Str("regexp", m.regexp.String())
 	}
-	log.Info().Str("rule", a.rule.name).Str("match", ms).Msg("")
+	ev.Msg("")
 
 	return nil
 }
