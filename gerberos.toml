@@ -1,11 +1,6 @@
 # Backend to use, choice of ["ipset", "nft"].
 backend = "ipset"
 
-# If true, additional diagnostic information
-# will be printed to stdout.
-# Default: false
-#verbose = false
-
 # If non-empty, ipsets will be saved when gerberos
 # is terminated (unless killed by SIGKILL) and
 # restored when gerberos starts. Timeouts will
