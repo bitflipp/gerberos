@@ -4,11 +4,12 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"log"
 	"os"
 	"os/signal"
 	"syscall"
 	"time"
+
+	"github.com/rs/zerolog/log"
 )
 
 type runner struct {
@@ -70,7 +71,7 @@ func (rn *runner) spawnWorker(r *rule, requeue bool) {
 			r.worker(requeue)
 		}
 	}()
-	log.Printf("%s: spawned worker", r.name)
+	log.Info().Str("rule", r.name).Msg("spawned worker")
 }
 
 func (rn *runner) run(requeueWorkers bool) {
@@ -97,7 +98,7 @@ func (rn *runner) run(requeueWorkers bool) {
 	select {
 	case <-rn.stopped.Done():
 	case s := <-signalChan:
-		log.Printf("received signal: %s", s)
+		log.Info().Str("signal", s.String()).Msg("received signal")
 		rn.stop()
 	}
 }

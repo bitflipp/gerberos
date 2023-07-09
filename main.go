@@ -2,10 +2,10 @@ package main
 
 import (
 	"flag"
-	"io"
-	"log"
-	"os"
 	"runtime/debug"
+
+	"github.com/rs/zerolog"
+	"github.com/rs/zerolog/log"
 )
 
 var (
@@ -13,14 +13,15 @@ var (
 )
 
 func logBuildInfo() {
+	ev := log.Info()
+
 	bi, ok := debug.ReadBuildInfo()
 	if !ok {
-		log.Print("no build info found")
+		ev.Msg("no build info found")
 		return
 	}
 
-	log.Printf("build info:")
-	log.Printf("- built with: %s", bi.GoVersion)
+	ev = ev.Str("version", version).Str("goVersion", bi.GoVersion)
 	for _, s := range bi.Settings {
 		switch s.Key {
 		case "vcs.revision":
@@ -28,13 +29,12 @@ func logBuildInfo() {
 			if len(s.Value) > 7 {
 				s.Value = s.Value[:l]
 			}
-			log.Printf("- revision: %s", s.Value)
+			ev = ev.Str("revision", s.Value)
 		case "vcs.modified":
-			if s.Value == "true" {
-				log.Printf("- source files were modified since last commit")
-			}
+			ev = ev.Bool("sourceFileModified", s.Value == "true")
 		}
 	}
+	ev.Msg("build info found")
 }
 
 func main() {
@@ -45,36 +45,35 @@ func main() {
 	// Configuration
 	c := &configuration{}
 	if err := c.readFile(*cfp); err != nil {
-		log.Fatalf("failed to read configuration file: %s", err)
+		log.Fatal().Err(err).Msg("failed to read configuration file")
 	}
 
 	// Logging
-	log.SetFlags(0)
-	if c.LogFilePath != "" {
-		lf, err := os.OpenFile(c.LogFilePath, os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0644)
-		if err != nil {
-			log.Fatalf("failed to open log file: %s", err)
-		}
-		defer lf.Close()
-		lw := rfcPrefixWriter{
-			clock:  &realTimeClock{},
-			writer: lf,
-		}
-		log.SetOutput(io.MultiWriter(os.Stderr, lw))
+	switch c.LogLevel {
+	case "debug":
+		zerolog.SetGlobalLevel(zerolog.DebugLevel)
+	case "info":
+		zerolog.SetGlobalLevel(zerolog.InfoLevel)
+	case "warn":
+		zerolog.SetGlobalLevel(zerolog.WarnLevel)
+	case "error":
+		zerolog.SetGlobalLevel(zerolog.ErrorLevel)
+	default:
+		log.Warn().Str("logLevel", c.LogLevel).Msg("unknown log level, defaulting to info")
+		zerolog.SetGlobalLevel(zerolog.InfoLevel)
 	}
 
 	// Version and build info
-	log.Printf("gerberos %s", version)
 	logBuildInfo()
 
 	// Runner
 	rn := newRunner(c)
 	if err := rn.initialize(); err != nil {
-		log.Fatalf("failed to initialize runner: %s", err)
+		log.Fatal().Err(err).Msg("failed to initialize runner")
 	}
 	defer func() {
 		if err := rn.finalize(); err != nil {
-			log.Fatalf("failed to finalize runner: %s", err)
+			log.Fatal().Err(err).Msg("failed to finalize runner")
 		}
 	}()
 	rn.run(true)

@@ -3,11 +3,12 @@ package main
 import (
 	"errors"
 	"fmt"
-	"log"
 	"net"
 	"regexp"
 	"strings"
 	"time"
+
+	"github.com/rs/zerolog/log"
 )
 
 type match struct {
@@ -97,8 +98,8 @@ func (r *rule) matchAggregate(line string) (*match, error) {
 		}
 		h := sm["ip"]
 		h = strings.Trim(h, "[]")
-		pip := net.ParseIP(h)
-		if pip == nil {
+		ip := net.ParseIP(h)
+		if ip == nil {
 			return nil, fmt.Errorf(`failed to parse matched IP "%s"`, h)
 		}
 
@@ -108,10 +109,8 @@ func (r *rule) matchAggregate(line string) (*match, error) {
 		}
 
 		a.registryMutex.Lock()
-		a.registry[id] = pip
-		if r.runner.configuration.Verbose {
-			log.Printf(`%s: added ID "%s" with IP %s to registry`, r.name, id, pip)
-		}
+		a.registry[id] = ip
+		log.Debug().Str("rule", r.name).Str("id", id).IPAddr("ip", ip).Msg("added ID to registry")
 		a.registryMutex.Unlock()
 
 		go func(id string) {
@@ -119,9 +118,7 @@ func (r *rule) matchAggregate(line string) (*match, error) {
 			a.registryMutex.Lock()
 			if ip, e := a.registry[id]; e {
 				delete(a.registry, id)
-				if r.runner.configuration.Verbose {
-					log.Printf(`%s: removed ID "%s" with IP %s from registry`, r.name, id, ip)
-				}
+				log.Debug().Str("rule", r.name).Str("id", id).IPAddr("ip", ip).Msg("removed ID from registry")
 			}
 			a.registryMutex.Unlock()
 		}(id)

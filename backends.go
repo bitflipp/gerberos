@@ -3,10 +3,11 @@ package main
 import (
 	"errors"
 	"fmt"
-	"log"
 	"os"
 	"os/exec"
 	"time"
+
+	"github.com/rs/zerolog/log"
 )
 
 type backend interface {
@@ -113,7 +114,7 @@ func (b *ipsetBackend) restoreIpsets() error {
 	defer func() {
 		f.Close()
 		if err := os.Remove(b.runner.configuration.SaveFilePath); err != nil {
-			log.Printf("failed to delete save file: %s", err)
+			log.Warn().Err(err).Msg("failed to delete save file")
 		}
 	}()
 
@@ -159,10 +160,10 @@ func (b *ipsetBackend) initialize() error {
 				return fmt.Errorf("failed to create ipsets: %w", err)
 			}
 		} else {
-			log.Printf(`restored ipsets from "%s"`, b.runner.configuration.SaveFilePath)
+			log.Info().Str("saveFilePath", b.runner.configuration.SaveFilePath).Msg("restored ipsets")
 		}
 	} else {
-		log.Printf("warning: not persisting ipsets")
+		log.Warn().Msg("not persisting ipsets")
 		if err := b.createIpsets(); err != nil {
 			return fmt.Errorf("failed to create ipsets: %w", err)
 		}
@@ -299,12 +300,12 @@ func (b *nftBackend) initialize() error {
 
 	if b.runner.configuration.SaveFilePath != "" {
 		if err := b.restoreSets(); err != nil {
-			log.Printf(`failed to restore sets from "%s": %s`, b.runner.configuration.SaveFilePath, err)
+			log.Warn().Str("saveFilePath", b.runner.configuration.SaveFilePath).Err(err).Msg("failed to restore sets")
 		} else {
-			log.Printf(`restored sets from "%s"`, b.runner.configuration.SaveFilePath)
+			log.Info().Str("saveFilePath", b.runner.configuration.SaveFilePath).Msg("restored sets")
 		}
 	} else {
-		log.Printf("warning: not persisting sets")
+		log.Warn().Msg("not persisting sets")
 	}
 
 	return nil
