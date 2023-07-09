@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"errors"
 	"fmt"
+	"io"
 	"os"
 	"os/exec"
 	"regexp"
@@ -233,10 +234,11 @@ func (r *rule) processScanner(name string, args ...string) (chan *match, error) 
 	if err != nil {
 		return nil, err
 	}
-	// e, err := cmd.StderrPipe()
+	e, err := cmd.StderrPipe()
 	if err != nil {
 		return nil, err
 	}
+	oe := io.MultiReader(o, e)
 
 	if err := cmd.Start(); err != nil {
 		return nil, err
@@ -266,7 +268,7 @@ func (r *rule) processScanner(name string, args ...string) (chan *match, error) 
 			close(stop)
 		}()
 
-		sc := bufio.NewScanner(o)
+		sc := bufio.NewScanner(oe)
 		for sc.Scan() {
 			if m, err := r.match(sc.Text()); err == nil {
 				c <- m
@@ -290,15 +292,6 @@ func (r *rule) processScanner(name string, args ...string) (chan *match, error) 
 			log.Warn().Str("rule", r.name).Str("command", cmd.String()).Err(err).Msg("failed to execute command")
 		}
 	}()
-	// REVISIT
-	/*
-		go func() {
-			sc := bufio.NewScanner(e)
-			for sc.Scan() {
-				log.Printf(`%s: process stderr: "%s"`, r.name, sc.Text())
-			}
-		}()
-	*/
 
 	return c, nil
 }
