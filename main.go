@@ -12,8 +12,8 @@ var (
 	version = "unknown version"
 )
 
-func logBuildInfo() {
-	ev := log.Info()
+func logVersionAndBuildInfo() {
+	ev := log.Info().Str("version", version)
 
 	bi, ok := debug.ReadBuildInfo()
 	if !ok {
@@ -21,7 +21,7 @@ func logBuildInfo() {
 		return
 	}
 
-	ev = ev.Str("version", version).Str("goVersion", bi.GoVersion)
+	ev = ev.Str("goVersion", bi.GoVersion)
 	for _, s := range bi.Settings {
 		switch s.Key {
 		case "vcs.revision":
@@ -34,21 +34,11 @@ func logBuildInfo() {
 			ev = ev.Bool("sourceFileModified", s.Value == "true")
 		}
 	}
-	ev.Msg("build info found")
+
+	ev.Msg("")
 }
 
-func main() {
-	// Flags
-	cfp := flag.String("c", "./gerberos.toml", "Path to TOML configuration file")
-	flag.Parse()
-
-	// Configuration
-	c := &configuration{}
-	if err := c.readFile(*cfp); err != nil {
-		log.Fatal().Err(err).Msg("failed to read configuration file")
-	}
-
-	// Logging
+func setGlobalLogLevel(c *configuration) {
 	switch c.LogLevel {
 	case "debug":
 		zerolog.SetGlobalLevel(zerolog.DebugLevel)
@@ -62,11 +52,20 @@ func main() {
 		log.Warn().Str("logLevel", c.LogLevel).Msg("unknown log level, defaulting to info")
 		zerolog.SetGlobalLevel(zerolog.InfoLevel)
 	}
+}
 
-	// Version and build info
-	logBuildInfo()
+func main() {
+	cfp := flag.String("c", "./gerberos.toml", "Path to TOML configuration file")
+	flag.Parse()
 
-	// Runner
+	c := &configuration{}
+	if err := c.readFile(*cfp); err != nil {
+		log.Fatal().Err(err).Msg("failed to read configuration file")
+	}
+
+	setGlobalLogLevel(c)
+	logVersionAndBuildInfo()
+
 	rn := newRunner(c)
 	if err := rn.initialize(); err != nil {
 		log.Fatal().Err(err).Msg("failed to initialize runner")
