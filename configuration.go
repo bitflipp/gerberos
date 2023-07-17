@@ -10,9 +10,9 @@ import (
 )
 
 type configuration struct {
-	Verbose      bool
 	Backend      string
 	SaveFilePath string
+	LogLevel     string
 	Rules        map[string]*rule
 }
 

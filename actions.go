@@ -3,8 +3,9 @@ package main
 import (
 	"errors"
 	"fmt"
-	"log"
 	"time"
+
+	"github.com/rs/zerolog/log"
 )
 
 type action interface {
@@ -40,9 +41,9 @@ func (a *banAction) initialize(r *rule) error {
 func (a *banAction) perform(m *match) error {
 	err := a.rule.runner.backend.ban(m.ip, m.ipv6, a.duration)
 	if err != nil {
-		log.Printf(`%s: failed to ban IP %s: %s`, a.rule.name, m.ip, err)
+		log.Warn().Str("rule", a.rule.name).IPAddr("ip", m.ip).Err(err).Msg("failed to ban IP")
 	} else {
-		log.Printf(`%s: banned IP %s for %s`, a.rule.name, m.ip, a.duration)
+		log.Info().Str("rule", a.rule.name).IPAddr("ip", m.ip).Dur("duration", a.duration).Msg("banned IP")
 	}
 
 	return err
@@ -77,13 +78,11 @@ func (a *logAction) initialize(r *rule) error {
 }
 
 func (a *logAction) perform(m *match) error {
-	var s string
+	ev := log.Info().Str("rule", a.rule.name).Bool("ipv6", m.ipv6).Time("time", m.time).IPAddr("ip", m.ip)
 	if a.extended {
-		s = m.stringExtended()
-	} else {
-		s = m.stringSimple()
+		ev = ev.Str("line", m.line).Str("regexp", m.regexp.String())
 	}
-	log.Printf("%s: %s", a.rule.name, s)
+	ev.Msg("")
 
 	return nil
 }

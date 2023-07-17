@@ -4,6 +4,7 @@ package main
 
 import (
 	"fmt"
+	"net"
 	"os"
 	"os/exec"
 	"sync"
@@ -166,8 +167,8 @@ func TestRunnerPersistence(t *testing.T) {
 			rn.configuration.Backend = b
 			rn.configuration.SaveFilePath = tn
 			testNoError(t, rn.initialize())
-			rn.backend.ban("123.123.123.123", false, time.Hour)
-			rn.backend.ban("affe::affe", true, time.Hour)
+			rn.backend.ban(net.ParseIP("123.123.123.123"), false, time.Hour)
+			rn.backend.ban(net.ParseIP("affe::affe"), true, time.Hour)
 			testNoError(t, rn.finalize())
 		}
 		{
@@ -239,7 +240,7 @@ func TestRunnerIpsetBackendBanFaulty(t *testing.T) {
 	rn.configuration.Backend = "ipset"
 	testNoError(t, rn.initialize())
 	rn.executor = newTestFaultyExecutor("", 1, errFault, "ipset", "add", "gerberos4", "123.123.123.123", "timeout", "3600")
-	testError(t, rn.backend.ban("123.123.123.123", false, time.Hour))
+	testError(t, rn.backend.ban(net.ParseIP("123.123.123.123"), false, time.Hour))
 }
 
 func TestRunnerIpsetBackendFinalizeFaulty(t *testing.T) {
@@ -257,13 +258,13 @@ func TestRunnerNftBackendBanFaulty(t *testing.T) {
 	rn.configuration.Backend = "nft"
 	testNoError(t, rn.initialize())
 	rn.executor = newTestFaultyExecutor("", 1, errFault, "nft", "add", "element", "ip6", "gerberos6", "set6", "{ affe::affe timeout 3600s }")
-	testNoError(t, rn.backend.ban("affe::affe", true, time.Hour))
+	testNoError(t, rn.backend.ban(net.ParseIP("affe::affe"), true, time.Hour))
 	rn.executor = newTestFaultyExecutor("", 2, errFault, "nft", "add", "element", "ip6", "gerberos6", "set6", "{ affe::affe timeout 3600s }")
-	testError(t, rn.backend.ban("affe::affe", true, time.Hour))
+	testError(t, rn.backend.ban(net.ParseIP("affe::affe"), true, time.Hour))
 	rn.executor = newTestFaultyExecutor("", 1, errFault, "nft", "add", "element", "ip", "gerberos4", "set4", "{ 123.123.123.123 timeout 3600s }")
-	testNoError(t, rn.backend.ban("123.123.123.123", false, time.Hour))
+	testNoError(t, rn.backend.ban(net.ParseIP("123.123.123.123"), false, time.Hour))
 	rn.executor = newTestFaultyExecutor("", 2, errFault, "nft", "add", "element", "ip", "gerberos4", "set4", "{ 123.123.123.123 timeout 3600s }")
-	testError(t, rn.backend.ban("123.123.123.123", false, time.Hour))
+	testError(t, rn.backend.ban(net.ParseIP("123.123.123.123"), false, time.Hour))
 }
 
 func TestRunnerRulesWorker(t *testing.T) {

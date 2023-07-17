@@ -3,15 +3,17 @@ package main
 import (
 	"errors"
 	"fmt"
-	"log"
+	"net"
 	"os"
 	"os/exec"
 	"time"
+
+	"github.com/rs/zerolog/log"
 )
 
 type backend interface {
 	initialize() error
-	ban(ip string, ipv6 bool, d time.Duration) error
+	ban(ip net.IP, ipv6 bool, d time.Duration) error
 	finalize() error
 }
 
@@ -113,7 +115,7 @@ func (b *ipsetBackend) restoreIpsets() error {
 	defer func() {
 		f.Close()
 		if err := os.Remove(b.runner.configuration.SaveFilePath); err != nil {
-			log.Printf("failed to delete save file: %s", err)
+			log.Warn().Err(err).Msg("failed to delete save file")
 		}
 	}()
 
@@ -159,10 +161,10 @@ func (b *ipsetBackend) initialize() error {
 				return fmt.Errorf("failed to create ipsets: %w", err)
 			}
 		} else {
-			log.Printf(`restored ipsets from "%s"`, b.runner.configuration.SaveFilePath)
+			log.Info().Str("saveFilePath", b.runner.configuration.SaveFilePath).Msg("restored ipsets")
 		}
 	} else {
-		log.Printf("warning: not persisting ipsets")
+		log.Warn().Msg("not persisting ipsets")
 		if err := b.createIpsets(); err != nil {
 			return fmt.Errorf("failed to create ipsets: %w", err)
 		}
@@ -174,14 +176,14 @@ func (b *ipsetBackend) initialize() error {
 	return nil
 }
 
-func (b *ipsetBackend) ban(ip string, ipv6 bool, d time.Duration) error {
+func (b *ipsetBackend) ban(ip net.IP, ipv6 bool, d time.Duration) error {
 	s := b.ipset4Name
 	if ipv6 {
 		s = b.ipset6Name
 	}
 	ds := int64(d.Seconds())
-	if _, _, err := b.runner.executor.execute("ipset", "test", s, ip); err != nil {
-		if _, _, err := b.runner.executor.execute("ipset", "add", s, ip, "timeout", fmt.Sprint(ds)); err != nil {
+	if _, _, err := b.runner.executor.execute("ipset", "test", s, ip.String()); err != nil {
+		if _, _, err := b.runner.executor.execute("ipset", "add", s, ip.String(), "timeout", fmt.Sprint(ds)); err != nil {
 			return err
 		}
 	}
@@ -299,18 +301,18 @@ func (b *nftBackend) initialize() error {
 
 	if b.runner.configuration.SaveFilePath != "" {
 		if err := b.restoreSets(); err != nil {
-			log.Printf(`failed to restore sets from "%s": %s`, b.runner.configuration.SaveFilePath, err)
+			log.Warn().Str("saveFilePath", b.runner.configuration.SaveFilePath).Err(err).Msg("failed to restore sets")
 		} else {
-			log.Printf(`restored sets from "%s"`, b.runner.configuration.SaveFilePath)
+			log.Info().Str("saveFilePath", b.runner.configuration.SaveFilePath).Msg("restored sets")
 		}
 	} else {
-		log.Printf("warning: not persisting sets")
+		log.Warn().Msg("not persisting sets")
 	}
 
 	return nil
 }
 
-func (b *nftBackend) ban(ip string, ipv6 bool, d time.Duration) error {
+func (b *nftBackend) ban(ip net.IP, ipv6 bool, d time.Duration) error {
 	ds := int64(d.Seconds())
 
 	t, tn, sn := "ip", b.table4Name, b.set4Name
@@ -355,7 +357,7 @@ func (b *testBackend) initialize() error {
 	return b.initializeErr
 }
 
-func (b *testBackend) ban(ip string, ipv6 bool, d time.Duration) error {
+func (b *testBackend) ban(ip net.IP, ipv6 bool, d time.Duration) error {
 	return b.banErr
 }
 

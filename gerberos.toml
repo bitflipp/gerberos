@@ -1,15 +1,16 @@
 # Backend to use, choice of ["ipset", "nft"].
 backend = "ipset"
 
-# If true, additional diagnostic information
-# will be printed to stdout.
-verbose = true
-
-# If given, ipsets will be saved when gerberos
+# If non-empty, ipsets will be saved when gerberos
 # is terminated (unless killed by SIGKILL) and
 # restored when gerberos starts. Timeouts will
 # be restored as saved.
-saveFilePath = "./gerberos.save"
+# Default: ""
+#saveFilePath = "./gerberos.save"
+
+# Log level, choice of ["debug", "info", "warn", "error"].
+# Default: "info"
+logLevel = "info"
 
 [rules]
     [rules.ufw]
@@ -17,7 +18,7 @@ saveFilePath = "./gerberos.save"
     # - ["file", "<path to non-directory file>"] (using tail)
     # - ["systemd", "<name of systemd service>"] (using journalctl)
     # - ["kernel"] (using journalctl)
-    # - ["process", "<name>", "[any number of]", "[optional arguments]"]
+    # - ["process", "<name>", "[any number of...]", "[...optional arguments]"]
     source = ["file", "/var/log/syslog"]
     # Required. "%ip%" must appear exactly once in
     # each main regexp (Golang flavor). "%ip%" will be

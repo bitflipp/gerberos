@@ -4,13 +4,16 @@ import (
 	"bufio"
 	"errors"
 	"fmt"
-	"log"
+	"io"
 	"os"
 	"os/exec"
 	"regexp"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
+
+	"github.com/rs/zerolog/log"
 )
 
 const (
@@ -240,7 +243,7 @@ func (r *rule) processScanner(name string, args ...string) (chan *match, error) 
 	if err := cmd.Start(); err != nil {
 		return nil, err
 	}
-	log.Printf(`%s: scanning process stdout and stderr: "%s"`, r.name, cmd)
+	log.Info().Str("rule", r.name).Str("command", cmd.String()).Msg("scanning process stdout and stderr")
 
 	go func() {
 		select {
@@ -265,20 +268,28 @@ func (r *rule) processScanner(name string, args ...string) (chan *match, error) 
 			close(stop)
 		}()
 
-		sc := bufio.NewScanner(o)
-		for sc.Scan() {
-			if m, err := r.match(sc.Text()); err == nil {
-				c <- m
-			} else {
-				if r.runner.configuration.Verbose {
-					log.Printf("%s: failed to create match: %s", r.name, err)
+		rcs := []io.ReadCloser{o, e}
+		wg := &sync.WaitGroup{}
+		wg.Add(len(rcs))
+		for _, rc := range rcs {
+			go func(rc io.ReadCloser) {
+				sc := bufio.NewScanner(rc)
+				for sc.Scan() {
+					if m, err := r.match(sc.Text()); err == nil {
+						c <- m
+					} else {
+						log.Debug().Str("rule", r.name).Err(err).Msg("failed to create match")
+					}
 				}
-			}
+				if err := sc.Err(); err != nil {
+					log.Warn().Str("rule", r.name).Str("command", cmd.String()).Err(err).Msg("failed to scan command output")
+				}
+				wg.Done()
+			}(rc)
 		}
+		wg.Wait()
 		close(c)
-		if err = sc.Err(); err != nil {
-			log.Printf(`%s: error while scanning command "%s": %s`, r.name, cmd, err.Error())
-		}
+
 		if err = cmd.Wait(); err != nil {
 			var eerr *exec.ExitError
 			if errors.As(err, &eerr) {
@@ -288,13 +299,7 @@ func (r *rule) processScanner(name string, args ...string) (chan *match, error) 
 					return
 				}
 			}
-			log.Printf(`%s: error while executing command "%s": %s`, r.name, cmd, err.Error())
-		}
-	}()
-	go func() {
-		sc := bufio.NewScanner(e)
-		for sc.Scan() {
-			log.Printf(`%s: process stderr: "%s"`, r.name, sc.Text())
+			log.Warn().Str("rule", r.name).Str("command", cmd.String()).Err(err).Msg("failed to execute command")
 		}
 	}()
 
@@ -304,7 +309,7 @@ func (r *rule) processScanner(name string, args ...string) (chan *match, error) 
 func (r *rule) worker(requeue bool) error {
 	c, err := r.source.matches()
 	if err != nil {
-		log.Printf("%s: failed to initialize matches channel: %s", r.name, err)
+		log.Warn().Str("rule", r.name).Err(err).Msg("failed to initialize matches channel")
 		return err
 	}
 
@@ -316,7 +321,7 @@ func (r *rule) worker(requeue bool) error {
 
 		if p {
 			if err := r.action.perform(m); err != nil {
-				log.Printf("%s: failed to perform action: %s", r.name, err)
+				log.Warn().Str("rule", r.name).Err(err).Msg("failed to perform action")
 			}
 		}
 	}
@@ -327,7 +332,7 @@ func (r *rule) worker(requeue bool) error {
 			return nil
 		default:
 		}
-		log.Printf("%s: queuing worker for respawn", r.name)
+		log.Info().Str("rule", r.name).Msg("queuing worker for respawn")
 		r.runner.respawnWorkerChan <- r
 	}
 

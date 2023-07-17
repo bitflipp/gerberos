@@ -2,23 +2,26 @@ package main
 
 import (
 	"flag"
-	"log"
 	"runtime/debug"
+
+	"github.com/rs/zerolog"
+	"github.com/rs/zerolog/log"
 )
 
 var (
 	version = "unknown version"
 )
 
-func logBuildInfo() {
+func logVersionAndBuildInfo() {
+	ev := log.Info().Str("version", version)
+
 	bi, ok := debug.ReadBuildInfo()
 	if !ok {
-		log.Print("no build info found")
+		ev.Msg("no build info found")
 		return
 	}
 
-	log.Printf("build info:")
-	log.Printf("- built with: %s", bi.GoVersion)
+	ev = ev.Str("goVersion", bi.GoVersion)
 	for _, s := range bi.Settings {
 		switch s.Key {
 		case "vcs.revision":
@@ -26,41 +29,50 @@ func logBuildInfo() {
 			if len(s.Value) > 7 {
 				s.Value = s.Value[:l]
 			}
-			log.Printf("- revision: %s", s.Value)
+			ev = ev.Str("revision", s.Value)
 		case "vcs.modified":
-			if s.Value == "true" {
-				log.Printf("- source files were modified since last commit")
-			}
+			ev = ev.Bool("sourceFileModified", s.Value == "true")
 		}
+	}
+
+	ev.Msg("")
+}
+
+func setGlobalLogLevel(c *configuration) {
+	switch c.LogLevel {
+	case "debug":
+		zerolog.SetGlobalLevel(zerolog.DebugLevel)
+	case "info":
+		zerolog.SetGlobalLevel(zerolog.InfoLevel)
+	case "warn":
+		zerolog.SetGlobalLevel(zerolog.WarnLevel)
+	case "error":
+		zerolog.SetGlobalLevel(zerolog.ErrorLevel)
+	default:
+		log.Warn().Str("logLevel", c.LogLevel).Msg("unknown log level, defaulting to info")
+		zerolog.SetGlobalLevel(zerolog.InfoLevel)
 	}
 }
 
 func main() {
-	// Logging
-	log.SetFlags(0)
-
-	// Version and build info
-	log.Printf("gerberos %s", version)
-	logBuildInfo()
-
-	// Flags
 	cfp := flag.String("c", "./gerberos.toml", "Path to TOML configuration file")
 	flag.Parse()
 
-	// Configuration
 	c := &configuration{}
 	if err := c.readFile(*cfp); err != nil {
-		log.Fatalf("failed to read configuration file: %s", err)
+		log.Fatal().Err(err).Msg("failed to read configuration file")
 	}
 
-	// Runner
+	setGlobalLogLevel(c)
+	logVersionAndBuildInfo()
+
 	rn := newRunner(c)
 	if err := rn.initialize(); err != nil {
-		log.Fatalf("failed to initialize runner: %s", err)
+		log.Fatal().Err(err).Msg("failed to initialize runner")
 	}
 	defer func() {
 		if err := rn.finalize(); err != nil {
-			log.Fatalf("failed to finalize runner: %s", err)
+			log.Fatal().Err(err).Msg("failed to finalize runner")
 		}
 	}()
 	rn.run(true)

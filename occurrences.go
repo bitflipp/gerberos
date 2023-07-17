@@ -1,6 +1,11 @@
 package main
 
-import "time"
+import (
+	"net"
+	"time"
+
+	"github.com/rs/zerolog/log"
+)
 
 type occurrences struct {
 	registry map[string][]time.Time
@@ -8,21 +13,26 @@ type occurrences struct {
 	count    int
 }
 
-func (r *occurrences) add(host string) bool {
-	if _, f := r.registry[host]; !f {
-		r.registry[host] = []time.Time{time.Now()}
+func (r *occurrences) add(ip net.IP) bool {
+	ips := ip.String()
+	t := time.Now()
+
+	log.Debug().IPAddr("ip", ip).Int("length", len(r.registry[ips])).Msg("updating occurrences")
+
+	if _, f := r.registry[ips]; !f {
+		r.registry[ips] = []time.Time{t}
 		return false
 	}
 
-	r.registry[host] = append(r.registry[host], time.Now())
-	if len(r.registry[host]) > r.count {
-		r.registry[host] = r.registry[host][1:]
+	r.registry[ips] = append(r.registry[ips], t)
+	if len(r.registry[ips]) > r.count {
+		r.registry[ips] = r.registry[ips][1:]
 	}
 
-	if len(r.registry[host]) == r.count {
-		d := r.registry[host][r.count-1].Sub(r.registry[host][0])
+	if len(r.registry[ips]) == r.count {
+		d := r.registry[ips][r.count-1].Sub(r.registry[ips][0])
 		if d <= r.interval {
-			delete(r.registry, host)
+			delete(r.registry, ips)
 			return true
 		}
 	}
