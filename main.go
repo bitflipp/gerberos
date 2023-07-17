@@ -31,7 +31,7 @@ func logVersionAndBuildInfo() {
 			}
 			ev = ev.Str("revision", s.Value)
 		case "vcs.modified":
-			ev = ev.Bool("sourceFileModified", s.Value == "true")
+			ev = ev.Bool("sourceFilesModified", s.Value == "true")
 		}
 	}
 
