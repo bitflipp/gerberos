@@ -1,4 +1,4 @@
-package main
+package gerberos
 
 import (
 	"context"
@@ -12,8 +12,8 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
-type runner struct {
-	configuration      *configuration
+type Runner struct {
+	configuration      *Configuration
 	backend            backend
 	respawnWorkerDelay time.Duration
 	respawnWorkerChan  chan *rule
@@ -22,7 +22,7 @@ type runner struct {
 	stopped            context.Context
 }
 
-func (rn *runner) initialize() error {
+func (rn *Runner) Initialize() error {
 	if rn.configuration == nil {
 		return errors.New("configuration has not been set")
 	}
@@ -55,7 +55,7 @@ func (rn *runner) initialize() error {
 	return nil
 }
 
-func (rn *runner) finalize() error {
+func (rn *Runner) Finalize() error {
 	if err := rn.backend.finalize(); err != nil {
 		return fmt.Errorf("failed to finalize backend: %w", err)
 	}
@@ -63,7 +63,7 @@ func (rn *runner) finalize() error {
 	return nil
 }
 
-func (rn *runner) spawnWorker(r *rule, requeue bool) {
+func (rn *Runner) spawnWorker(r *rule, requeue bool) {
 	go func() {
 		select {
 		case <-rn.stopped.Done():
@@ -74,7 +74,7 @@ func (rn *runner) spawnWorker(r *rule, requeue bool) {
 	log.Info().Str("rule", r.name).Msg("spawned worker")
 }
 
-func (rn *runner) run(requeueWorkers bool) {
+func (rn *Runner) Run(requeueWorkers bool) {
 	for _, r := range rn.configuration.Rules {
 		rn.spawnWorker(r, requeueWorkers)
 	}
@@ -103,9 +103,9 @@ func (rn *runner) run(requeueWorkers bool) {
 	}
 }
 
-func newRunner(c *configuration) *runner {
+func NewRunner(c *Configuration) *Runner {
 	ctx, cancel := context.WithCancel(context.Background())
-	return &runner{
+	return &Runner{
 		configuration:      c,
 		respawnWorkerDelay: 5 * time.Second,
 		respawnWorkerChan:  make(chan *rule),

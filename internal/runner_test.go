@@ -1,6 +1,6 @@
 //go:build system
 
-package main
+package gerberos
 
 import (
 	"fmt"
@@ -17,8 +17,8 @@ func TestRunnerInitializeFinalize(t *testing.T) {
 		rn, err := newTestRunner()
 		testNoError(t, err)
 		rn.configuration.Backend = n
-		testNoError(t, rn.initialize())
-		testNoError(t, rn.finalize())
+		testNoError(t, rn.Initialize())
+		testNoError(t, rn.Finalize())
 	}
 
 	tb("ipset")
@@ -31,7 +31,7 @@ func TestRunnerBackendInitializeInvalid(t *testing.T) {
 		rn, err := newTestRunner()
 		testNoError(t, err)
 		rn.configuration.Backend = n
-		testError(t, rn.initialize())
+		testError(t, rn.Initialize())
 	}
 
 	tbi("")
@@ -44,7 +44,7 @@ func TestRunnerBackendInitializeFaulty(t *testing.T) {
 		testNoError(t, err)
 		rn.configuration.Backend = b
 		rn.executor = newTestFaultyExecutor(o, ec, ferr, n, args...)
-		testError(t, rn.initialize())
+		testError(t, rn.Initialize())
 	}
 
 	c, s4, s6 := "gerberos", "gerberos4", "gerberos6"
@@ -97,8 +97,8 @@ func TestRunnerBackendFinalizeFaulty(t *testing.T) {
 		rn.configuration.Backend = b
 		rn.configuration.SaveFilePath = tn
 		rn.executor = newTestFaultyExecutor(o, ec, ferr, n, args...)
-		testNoError(t, rn.initialize())
-		testError(t, rn.finalize())
+		testNoError(t, rn.Initialize())
+		testError(t, rn.Finalize())
 	}
 
 	t4, s4, t6, s6 := "gerberos4", "set4", "gerberos6", "set6"
@@ -112,12 +112,12 @@ func TestRunnerBackendFinalizeFaulty(t *testing.T) {
 func TestRunnerExecute(t *testing.T) {
 	rn, err := newTestRunner()
 	testNoError(t, err)
-	testNoError(t, rn.initialize())
+	testNoError(t, rn.Initialize())
 	wg := &sync.WaitGroup{}
 	wg.Add(1)
 	go func() {
-		rn.run(false)
-		testNoError(t, rn.finalize())
+		rn.Run(false)
+		testNoError(t, rn.Finalize())
 		wg.Done()
 	}()
 	time.Sleep(5 * time.Second)
@@ -131,12 +131,12 @@ func TestRunnerPerformAction(t *testing.T) {
 		testNoError(t, err)
 		rn.configuration.Backend = b
 		rn.configuration.Rules["test"].Action = a
-		testNoError(t, rn.initialize())
+		testNoError(t, rn.Initialize())
 		wg := &sync.WaitGroup{}
 		wg.Add(1)
 		go func() {
-			rn.run(false)
-			testNoError(t, rn.finalize())
+			rn.Run(false)
+			testNoError(t, rn.Finalize())
 			wg.Done()
 		}()
 		time.Sleep(5 * time.Second)
@@ -166,18 +166,18 @@ func TestRunnerPersistence(t *testing.T) {
 			testNoError(t, err)
 			rn.configuration.Backend = b
 			rn.configuration.SaveFilePath = tn
-			testNoError(t, rn.initialize())
+			testNoError(t, rn.Initialize())
 			rn.backend.ban(net.ParseIP("123.123.123.123"), false, time.Hour)
 			rn.backend.ban(net.ParseIP("affe::affe"), true, time.Hour)
-			testNoError(t, rn.finalize())
+			testNoError(t, rn.Finalize())
 		}
 		{
 			rn, err := newTestRunner()
 			testNoError(t, err)
 			rn.configuration.Backend = b
 			rn.configuration.SaveFilePath = tn
-			testNoError(t, rn.initialize())
-			testNoError(t, rn.finalize())
+			testNoError(t, rn.Initialize())
+			testNoError(t, rn.Finalize())
 		}
 	}
 
@@ -189,14 +189,14 @@ func TestRunnerMissingConfiguration(t *testing.T) {
 	rn, err := newTestRunner()
 	testNoError(t, err)
 	rn.configuration = nil
-	testError(t, rn.initialize())
+	testError(t, rn.Initialize())
 }
 
 func TestRunnerMissingBackend(t *testing.T) {
 	rn, err := newTestRunner()
 	testNoError(t, err)
 	rn.configuration.Backend = ""
-	testError(t, rn.initialize())
+	testError(t, rn.Initialize())
 }
 
 func TestRunnerBanFaulty(t *testing.T) {
@@ -204,7 +204,7 @@ func TestRunnerBanFaulty(t *testing.T) {
 	testNoError(t, err)
 	r := rn.configuration.Rules["test"]
 	r.Action = []string{"ban", "1h"}
-	testNoError(t, rn.initialize())
+	testNoError(t, rn.Initialize())
 	rn.backend.(*testBackend).banErr = errFault
 	testError(t, r.action.perform(&match{}))
 }
@@ -219,8 +219,8 @@ func TestRunnerIpsetBackendRestoreFaulty(t *testing.T) {
 		testNoError(t, err)
 		rn.configuration.Backend = "ipset"
 		rn.configuration.SaveFilePath = tn
-		testNoError(t, rn.initialize())
-		testNoError(t, rn.finalize())
+		testNoError(t, rn.Initialize())
+		testNoError(t, rn.Finalize())
 	}
 	{
 		rn, err := newTestRunner()
@@ -228,9 +228,9 @@ func TestRunnerIpsetBackendRestoreFaulty(t *testing.T) {
 		rn.configuration.Backend = "ipset"
 		rn.configuration.SaveFilePath = tn
 		rn.executor = newTestFaultyExecutor("", 1, errFault, "ipset", "restore")
-		testNoError(t, rn.initialize())
+		testNoError(t, rn.Initialize())
 		rn.executor = newTestFaultyExecutor("", 1, errFault, "ipset", "create", "gerberos4", "hash:ip", "timeout", "0")
-		testError(t, rn.initialize())
+		testError(t, rn.Initialize())
 	}
 }
 
@@ -238,7 +238,7 @@ func TestRunnerIpsetBackendBanFaulty(t *testing.T) {
 	rn, err := newTestRunner()
 	testNoError(t, err)
 	rn.configuration.Backend = "ipset"
-	testNoError(t, rn.initialize())
+	testNoError(t, rn.Initialize())
 	rn.executor = newTestFaultyExecutor("", 1, errFault, "ipset", "add", "gerberos4", "123.123.123.123", "timeout", "3600")
 	testError(t, rn.backend.ban(net.ParseIP("123.123.123.123"), false, time.Hour))
 }
@@ -247,16 +247,16 @@ func TestRunnerIpsetBackendFinalizeFaulty(t *testing.T) {
 	rn, err := newTestRunner()
 	testNoError(t, err)
 	rn.configuration.Backend = "ipset"
-	testNoError(t, rn.initialize())
+	testNoError(t, rn.Initialize())
 	rn.executor = newTestFaultyExecutor("", 3, errFault, "ipset", "destroy", "gerberos4")
-	testError(t, rn.finalize())
+	testError(t, rn.Finalize())
 }
 
 func TestRunnerNftBackendBanFaulty(t *testing.T) {
 	rn, err := newTestRunner()
 	testNoError(t, err)
 	rn.configuration.Backend = "nft"
-	testNoError(t, rn.initialize())
+	testNoError(t, rn.Initialize())
 	rn.executor = newTestFaultyExecutor("", 1, errFault, "nft", "add", "element", "ip6", "gerberos6", "set6", "{ affe::affe timeout 3600s }")
 	testNoError(t, rn.backend.ban(net.ParseIP("affe::affe"), true, time.Hour))
 	rn.executor = newTestFaultyExecutor("", 2, errFault, "nft", "add", "element", "ip6", "gerberos6", "set6", "{ affe::affe timeout 3600s }")
@@ -270,7 +270,7 @@ func TestRunnerNftBackendBanFaulty(t *testing.T) {
 func TestRunnerRulesWorker(t *testing.T) {
 	rn, err := newTestRunner()
 	testNoError(t, err)
-	testNoError(t, rn.initialize())
+	testNoError(t, rn.Initialize())
 	r := rn.configuration.Rules["test"]
 	r.worker(false)
 }
@@ -278,7 +278,7 @@ func TestRunnerRulesWorker(t *testing.T) {
 func TestRunnerRulesWorkerRequeue(t *testing.T) {
 	rn, err := newTestRunner()
 	testNoError(t, err)
-	testNoError(t, rn.initialize())
+	testNoError(t, rn.Initialize())
 	r := rn.configuration.Rules["test"]
 	rn.respawnWorkerDelay = 0
 	s := r.source.(*testSource)
@@ -286,7 +286,7 @@ func TestRunnerRulesWorkerRequeue(t *testing.T) {
 	wg := sync.WaitGroup{}
 	wg.Add(1)
 	go func() {
-		rn.run(true)
+		rn.Run(true)
 		wg.Done()
 	}()
 	r.worker(true)
@@ -298,7 +298,7 @@ func TestRunnerRulesWorkerRequeue(t *testing.T) {
 func TestRunnerRulesWorkerMatchesFaulty(t *testing.T) {
 	rn, err := newTestRunner()
 	testNoError(t, err)
-	testNoError(t, rn.initialize())
+	testNoError(t, rn.Initialize())
 	r := rn.configuration.Rules["test"]
 	r.source.(*testSource).matchesErr = errFault
 	r.worker(false)
@@ -308,20 +308,20 @@ func TestRunnerRulesInvalid(t *testing.T) {
 	rn, err := newTestRunner()
 	testNoError(t, err)
 	rn.configuration.Rules["test"].Source = []string{"unknown"}
-	testError(t, rn.initialize())
+	testError(t, rn.Initialize())
 }
 
 func TestRunnerRulesWorkerInvalidProcess(t *testing.T) {
 	rn, err := newTestRunner()
 	testNoError(t, err)
-	testNoError(t, rn.initialize())
+	testNoError(t, rn.Initialize())
 	r := rn.configuration.Rules["test"]
 	s := r.source.(*testSource)
 	s.processPath = "test/unknown"
 	wg := &sync.WaitGroup{}
 	wg.Add(1)
 	go func() {
-		rn.run(false)
+		rn.Run(false)
 		wg.Done()
 	}()
 	time.Sleep(5 * time.Second)
@@ -335,11 +335,11 @@ func TestRunnerSources(t *testing.T) {
 		testNoError(t, err)
 		r := rn.configuration.Rules["test"]
 		r.Source = s
-		testNoError(t, rn.initialize())
+		testNoError(t, rn.Initialize())
 		wg := &sync.WaitGroup{}
 		wg.Add(1)
 		go func() {
-			rn.run(false)
+			rn.Run(false)
 			wg.Done()
 		}()
 		time.Sleep(5 * time.Second)
@@ -358,7 +358,7 @@ func TestRunnerWorkerActionFaulty(t *testing.T) {
 	testNoError(t, err)
 	r := rn.configuration.Rules["test"]
 	r.Action = []string{"test"}
-	testNoError(t, rn.initialize())
+	testNoError(t, rn.Initialize())
 	testNoError(t, r.worker(false))
 }
 
@@ -368,13 +368,13 @@ func TestRunnerDanglingProcessFlaky(t *testing.T) {
 	r := newTestValidRule()
 	r.Source = []string{"process", "test/trapper_forever"}
 	rn.configuration.Rules["test"] = r
-	testNoError(t, rn.initialize())
+	testNoError(t, rn.Initialize())
 	wg := &sync.WaitGroup{}
 	wg.Add(1)
 	before, err := testCountChildren()
 	testNoError(t, err)
 	go func() {
-		rn.run(true)
+		rn.Run(true)
 		wg.Done()
 	}()
 	time.Sleep(1 * time.Second)
@@ -399,11 +399,11 @@ func TestRunnerManyRulesFlaky(t *testing.T) {
 		rn.configuration.Rules[fmt.Sprintf("test-%d", i)] = r
 	}
 	rn.respawnWorkerDelay = 2 * time.Millisecond
-	testNoError(t, rn.initialize())
+	testNoError(t, rn.Initialize())
 	wg := &sync.WaitGroup{}
 	wg.Add(1)
 	go func() {
-		rn.run(true)
+		rn.Run(true)
 		wg.Done()
 	}()
 	time.Sleep(4 * time.Second)

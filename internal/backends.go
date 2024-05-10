@@ -1,4 +1,4 @@
-package main
+package gerberos
 
 import (
 	"errors"
@@ -18,7 +18,7 @@ type backend interface {
 }
 
 type ipsetBackend struct {
-	runner     *runner
+	runner     *Runner
 	chainName  string
 	ipset4Name string
 	ipset6Name string
@@ -203,7 +203,7 @@ func (b *ipsetBackend) finalize() error {
 }
 
 type nftBackend struct {
-	runner     *runner
+	runner     *Runner
 	table4Name string
 	table6Name string
 	set4Name   string
@@ -347,7 +347,7 @@ func (b *nftBackend) finalize() error {
 }
 
 type testBackend struct {
-	runner        *runner
+	runner        *Runner
 	initializeErr error
 	banErr        error
 	finalizeErr   error
