@@ -7,8 +7,6 @@ import (
 	"os"
 
 	"github.com/BurntSushi/toml"
-	"github.com/rs/zerolog"
-	"github.com/rs/zerolog/log"
 )
 
 type Configuration struct {
@@ -37,23 +35,5 @@ func (c *Configuration) read(r io.Reader) error {
 		return fmt.Errorf("failed to decode configuration file: %w", err)
 	}
 
-	c.setGlobalLogLevel()
-
 	return nil
-}
-
-func (c *Configuration) setGlobalLogLevel() {
-	switch c.LogLevel {
-	case "debug":
-		zerolog.SetGlobalLevel(zerolog.DebugLevel)
-	case "info":
-		zerolog.SetGlobalLevel(zerolog.InfoLevel)
-	case "warn":
-		zerolog.SetGlobalLevel(zerolog.WarnLevel)
-	case "error":
-		zerolog.SetGlobalLevel(zerolog.ErrorLevel)
-	default:
-		log.Warn().Str("logLevel", c.LogLevel).Msg("unknown log level, defaulting to info")
-		zerolog.SetGlobalLevel(zerolog.InfoLevel)
-	}
 }

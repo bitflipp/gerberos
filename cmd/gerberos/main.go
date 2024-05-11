@@ -5,6 +5,7 @@ import (
 	"runtime/debug"
 
 	gerberos "github.com/bitflipp/gerberos/internal"
+	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 )
 
@@ -38,6 +39,22 @@ func logVersionAndBuildInfo() {
 	ev.Msg("")
 }
 
+func setGlobalLogLevel(c *gerberos.Configuration) {
+	switch c.LogLevel {
+	case "debug":
+		zerolog.SetGlobalLevel(zerolog.DebugLevel)
+	case "info":
+		zerolog.SetGlobalLevel(zerolog.InfoLevel)
+	case "warn":
+		zerolog.SetGlobalLevel(zerolog.WarnLevel)
+	case "error":
+		zerolog.SetGlobalLevel(zerolog.ErrorLevel)
+	default:
+		log.Warn().Str("logLevel", c.LogLevel).Msg("unknown log level, defaulting to info")
+		zerolog.SetGlobalLevel(zerolog.InfoLevel)
+	}
+}
+
 func main() {
 	cfp := flag.String("c", "./gerberos.toml", "Path to TOML configuration file")
 	flag.Parse()
@@ -47,6 +64,7 @@ func main() {
 		log.Fatal().Err(err).Msg("failed to read configuration file")
 	}
 
+	setGlobalLogLevel(c)
 	logVersionAndBuildInfo()
 
 	rn := gerberos.NewRunner(c)
