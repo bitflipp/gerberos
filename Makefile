@@ -19,9 +19,9 @@ run: dist
 	dist/gerberos
 
 test: clean
-	go test -v -coverprofile=gerberos.coverage
+	go test -v -coverprofile=gerberos.coverage ./...
 	go tool cover -html=gerberos.coverage
 
 test_system: clean
-	go test -v -tags=system -coverprofile=gerberos.coverage
+	go test -v -tags=system -coverprofile=gerberos.coverage ./...
 	go tool cover -html=gerberos.coverage

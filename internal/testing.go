@@ -1,4 +1,4 @@
-package main
+package gerberos
 
 import (
 	"errors"
@@ -63,19 +63,19 @@ func testNoError(t *testing.T, err error) {
 	}
 }
 
-func newTestConfiguration() (*configuration, error) {
-	c := &configuration{}
+func newTestConfiguration() (*Configuration, error) {
+	c := &Configuration{}
 
-	return c, c.readFile("test/configuration.toml")
+	return c, c.ReadFile("test/configuration.toml")
 }
 
-func newTestRunner() (*runner, error) {
+func newTestRunner() (*Runner, error) {
 	c, err := newTestConfiguration()
 	if err != nil {
 		return nil, err
 	}
 
-	return newRunner(c), nil
+	return NewRunner(c), nil
 }
 
 func newTestValidRule() *rule {

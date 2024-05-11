@@ -1,4 +1,4 @@
-package main
+package gerberos
 
 import (
 	"errors"
@@ -8,8 +8,8 @@ import (
 
 func TestConfigurationReadFileInvalid(t *testing.T) {
 	rc := func(n string) {
-		c := &configuration{}
-		testError(t, c.readFile(n))
+		c := &Configuration{}
+		testError(t, c.ReadFile(n))
 	}
 
 	rc("")
@@ -18,6 +18,6 @@ func TestConfigurationReadFileInvalid(t *testing.T) {
 
 func TestConfigurationReadFileError(t *testing.T) {
 	r := iotest.ErrReader(errors.New(""))
-	c := &configuration{}
+	c := &Configuration{}
 	testError(t, c.read(r))
 }

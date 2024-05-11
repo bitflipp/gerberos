@@ -4,6 +4,7 @@ import (
 	"flag"
 	"runtime/debug"
 
+	gerberos "github.com/bitflipp/gerberos/internal"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 )
@@ -38,7 +39,7 @@ func logVersionAndBuildInfo() {
 	ev.Msg("")
 }
 
-func setGlobalLogLevel(c *configuration) {
+func setGlobalLogLevel(c *gerberos.Configuration) {
 	switch c.LogLevel {
 	case "debug":
 		zerolog.SetGlobalLevel(zerolog.DebugLevel)
@@ -58,22 +59,22 @@ func main() {
 	cfp := flag.String("c", "./gerberos.toml", "Path to TOML configuration file")
 	flag.Parse()
 
-	c := &configuration{}
-	if err := c.readFile(*cfp); err != nil {
+	c := &gerberos.Configuration{}
+	if err := c.ReadFile(*cfp); err != nil {
 		log.Fatal().Err(err).Msg("failed to read configuration file")
 	}
 
 	setGlobalLogLevel(c)
 	logVersionAndBuildInfo()
 
-	rn := newRunner(c)
-	if err := rn.initialize(); err != nil {
+	rn := gerberos.NewRunner(c)
+	if err := rn.Initialize(); err != nil {
 		log.Fatal().Err(err).Msg("failed to initialize runner")
 	}
 	defer func() {
-		if err := rn.finalize(); err != nil {
+		if err := rn.Finalize(); err != nil {
 			log.Fatal().Err(err).Msg("failed to finalize runner")
 		}
 	}()
-	rn.run(true)
+	rn.Run(true)
 }
