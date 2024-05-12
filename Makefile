@@ -9,7 +9,7 @@ clean:
 
 dist: clean
 	mkdir dist
-	CGO_ENABLED=0 go build -o dist/gerberos -ldflags "-X main.version=$(VERSION)"
+	CGO_ENABLED=0 go build -o dist/gerberos -ldflags "-X main.version=$(VERSION)" ./cmd/gerberos
 
 release: dist
 	cp -r licenses-third-party gerberos.toml gerberos.service LICENSE dist
