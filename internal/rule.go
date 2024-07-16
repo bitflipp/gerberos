@@ -10,7 +10,6 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
-	"sync"
 	"time"
 
 	"github.com/rs/zerolog/log"
@@ -268,26 +267,18 @@ func (r *rule) processScanner(name string, args ...string) (chan *match, error) 
 			close(stop)
 		}()
 
-		rcs := []io.ReadCloser{o, e}
-		wg := &sync.WaitGroup{}
-		wg.Add(len(rcs))
-		for _, rc := range rcs {
-			go func(rc io.ReadCloser) {
-				sc := bufio.NewScanner(rc)
-				for sc.Scan() {
-					if m, err := r.match(sc.Text()); err == nil {
-						c <- m
-					} else {
-						log.Debug().Str("rule", r.name).Err(err).Msg("failed to create match")
-					}
-				}
-				if err := sc.Err(); err != nil {
-					log.Warn().Str("rule", r.name).Str("command", cmd.String()).Err(err).Msg("failed to scan command output")
-				}
-				wg.Done()
-			}(rc)
+		rd := io.MultiReader(o, e)
+		sc := bufio.NewScanner(rd)
+		for sc.Scan() {
+			if m, err := r.match(sc.Text()); err == nil {
+				c <- m
+			} else {
+				log.Debug().Str("rule", r.name).Err(err).Msg("failed to create match")
+			}
 		}
-		wg.Wait()
+		if err := sc.Err(); err != nil {
+			log.Warn().Str("rule", r.name).Str("command", cmd.String()).Err(err).Msg("failed to scan command output")
+		}
 		close(c)
 
 		if err = cmd.Wait(); err != nil {
