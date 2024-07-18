@@ -257,9 +257,9 @@ func (r *rule) processScanner(name string, args ...string) (chan *match, error) 
 		}
 	}()
 
-	c := make(chan *match, 1)
+	rcs := []io.ReadCloser{o, e}
+	c := make(chan *match, len(rcs))
 	go func() {
-		rcs := []io.ReadCloser{o, e}
 		wg := &sync.WaitGroup{}
 		wg.Add(len(rcs))
 		for _, rc := range rcs {
