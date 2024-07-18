@@ -253,21 +253,12 @@ func (r *rule) processScanner(name string, args ...string) (chan *match, error) 
 		if cmd.Process != nil {
 			cmd.Process.Signal(os.Interrupt)
 			time.Sleep(5 * time.Second)
-			select {
-			case <-stop:
-			default:
-				cmd.Process.Kill()
-			}
+			cmd.Process.Kill()
 		}
 	}()
 
 	c := make(chan *match, 1)
 	go func() {
-		defer func() {
-			stop <- true
-			close(stop)
-		}()
-
 		rcs := []io.ReadCloser{o, e}
 		wg := &sync.WaitGroup{}
 		wg.Add(len(rcs))
@@ -285,6 +276,7 @@ func (r *rule) processScanner(name string, args ...string) (chan *match, error) 
 					log.Warn().Str("rule", r.name).Str("command", cmd.String()).Err(err).Msg("failed to scan command output")
 				}
 				wg.Done()
+				stop <- true
 			}(rc)
 		}
 		wg.Wait()
