@@ -24,6 +24,9 @@ func TestRulesValue(t *testing.T) {
 		r.Occurrences = nil
 	})
 	ir(func(r *rule) {
+		r.Flags = nil
+	})
+	ir(func(r *rule) {
 		r.Action = []string{"log", "extended"}
 	})
 	ir(func(r *rule) {
@@ -37,6 +40,9 @@ func TestRulesValue(t *testing.T) {
 	})
 	ir(func(r *rule) {
 		r.Source = []string{"process", "kek", "se"}
+	})
+	ir(func(r *rule) {
+		r.Flags = []string{"keep-ansi-escape-sequences"}
 	})
 }
 
@@ -168,5 +174,8 @@ func TestRulesInvalid(t *testing.T) {
 	})
 	ee("occurrences: invalid interval parameter", func(r *rule) {
 		r.Occurrences = []string{"5", "5g"}
+	})
+	ee("flags: unknown flag", func(r *rule) {
+		r.Flags = []string{"this-is-not-a-supported-flag"}
 	})
 }

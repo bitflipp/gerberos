@@ -26,6 +26,9 @@ var (
 	ipRegexpText  = `(?P<ip>(\d?\d?\d\.){3}\d?\d?\d|\[?([0-9A-Fa-f]{0,4}::?){1,6}[0-9A-Fa-f]{0,4}::?[0-9A-Fa-f]{0,4})\]?`
 	idMagicRegexp = regexp.MustCompile(idMagicText)
 	idRegexpText  = `(?P<id>(.*))`
+
+	// Source: https://github.com/acarl005/stripansi/blob/master/stripansi.go
+	ansiEscapeSequenceRegex = regexp.MustCompile("[\u001B\u009B][[\\]()#;?]*(?:(?:(?:[a-zA-Z\\d]*(?:;[a-zA-Z\\d]*)*)?\u0007)|(?:(?:\\d{1,4}(?:;\\d{0,4})*)?[\\dA-PRZcf-ntqry=><~]))")
 )
 
 type rule struct {
@@ -34,6 +37,7 @@ type rule struct {
 	Action      []string
 	Aggregate   []string
 	Occurrences []string
+	Flags       []string
 
 	runner      *Runner
 	name        string
@@ -42,6 +46,8 @@ type rule struct {
 	action      action
 	aggregate   *aggregate
 	occurrences *occurrences
+
+	keepAnsiEscapeSequences bool
 }
 
 func (r *rule) initializeSource() error {
@@ -201,6 +207,23 @@ func (r *rule) initializeOccurrences() error {
 	return nil
 }
 
+func (r *rule) initializeFlags() error {
+	if r.Flags == nil {
+		return nil
+	}
+
+	for _, f := range r.Flags {
+		switch f {
+		case "keep-ansi-escape-sequences":
+			r.keepAnsiEscapeSequences = true
+		default:
+			return fmt.Errorf("unknown flag: %s", f)
+		}
+	}
+
+	return nil
+}
+
 func (r *rule) initialize(rn *Runner) error {
 	r.runner = rn
 
@@ -221,6 +244,10 @@ func (r *rule) initialize(rn *Runner) error {
 	}
 
 	if err := r.initializeOccurrences(); err != nil {
+		return err
+	}
+
+	if err := r.initializeFlags(); err != nil {
 		return err
 	}
 
@@ -266,7 +293,11 @@ func (r *rule) processScanner(name string, args ...string) (chan *match, error) 
 			go func(rc io.ReadCloser) {
 				sc := bufio.NewScanner(rc)
 				for sc.Scan() {
-					if m, err := r.match(sc.Text()); err == nil {
+					t := sc.Text()
+					if !r.keepAnsiEscapeSequences {
+						t = ansiEscapeSequenceRegex.ReplaceAllString(t, "")
+					}
+					if m, err := r.match(t); err == nil {
 						c <- m
 					} else {
 						log.Debug().Str("rule", r.name).Err(err).Msg("failed to create match")

@@ -108,6 +108,31 @@ func TestMatches(t *testing.T) {
 	ml("invalid [6.1]", "a %ip% b", false, "a [affe:affe] b")
 	ml("invalid [6.2]", "a %ip% b", false, "a [1a:1a] b")
 	ml("invalid [6.3]", "a %ip% b", false, "a [3ab9:1ea0:c269:5aad:b716:c28d:237d:4d8f:3ab9:1ea0:c269:5aad:b716:c28d:237d:4d8f] b")
+
+	// ANSI escape sequences
+	maesl := func(s string, re string, k bool, e bool, l string) *match {
+		r := newTestValidRule()
+		r.Regexp = []string{re}
+		r.Aggregate = nil
+		if k {
+			r.Flags = []string{"keep-ansi-escape-sequences"}
+		} else {
+			r.Flags = nil
+		}
+		if err := r.initialize(rn); err != nil {
+			t.Errorf("%s: failed to initialize rule", err)
+		}
+
+		m, err := r.match(l)
+		if e != (err == nil) {
+			t.Errorf(`%s: unexpected result`, s)
+		}
+
+		return m
+	}
+	esc := "\u001B\\["
+	maesl("keep 1", esc+"30m%ip%", true, false, esc+"30m8.8.8.8")
+	maesl("discard 1", esc+"30m%ip%", true, false, "8.8.8.8")
 }
 
 func TestMatchesAggregateInvalid(t *testing.T) {

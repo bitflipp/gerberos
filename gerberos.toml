@@ -35,6 +35,10 @@ logLevel = "info"
     # performed once the same match has occurred 5
     # times within 10 seconds, resetting the counter.
     occurrences = ["3", "5m"]
+    # Optional. Currently, only "keep-ansi-escape-sequences"
+    # is supported, which causes ANSI escape sequences (ECMA 48)
+    # not to be stripped before matching.
+    flags = ["keep-ansi-escape-sequences"]
 
     # Example aggregate rule for radicale.
     # Needs radicale logging -> level = info.
