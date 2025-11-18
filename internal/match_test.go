@@ -131,8 +131,9 @@ func TestMatches(t *testing.T) {
 		return m
 	}
 	esc := "\u001B\\["
-	maesl("keep 1", esc+"30m%ip%", true, false, esc+"30m8.8.8.8")
-	maesl("discard 1", esc+"30m%ip%", true, false, "8.8.8.8")
+	maesl("keep 1", "%ip%", true, true, esc+"30m8.8.8.8")
+	maesl("discard 1", "%ip%", false, true, esc+"30m8.8.8.8")
+	maesl("discard 2", esc+"30m%ip%", false, false, esc+"30m8.8.8.8")
 }
 
 func TestMatchesAggregateInvalid(t *testing.T) {
