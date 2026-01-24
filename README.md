@@ -19,7 +19,7 @@ Minimal additional logic is applied. This is to adhere to the [Unix philosophy](
 
 ### Development only
 
-- Go 1.18
+- Go 1.24
 - GNU Make 4.3 (optional)
 - pgrep (system tests only, optional)
 
