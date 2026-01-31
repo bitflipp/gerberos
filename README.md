@@ -6,6 +6,12 @@ Addresses can be logged or added to ipsets or nft rulesets that gerberos will ma
 
 Minimal additional logic is applied. This is to adhere to the [Unix philosophy](https://en.wikipedia.org/wiki/Unix_philosophy), but impacts gerberos' out-of-the-box usefulness for specific use cases when compared to tools like [fail2ban](https://github.com/fail2ban/fail2ban).
 
+## Current status
+
+While this repository does not get much commits nowerdays and might go without major changes even over longer periods spanning multiple years, that is because the software is pretty much feature complete (and *possibly* bugfree) and doing its work quietly in the background. In fact, it is run on multiple servers for years now without any problems. That said, the software is still maintained and this text will stay here as long as the software is maintained.
+
+If you find any bugs or want any features (without breaking the philosophy of minimal additional logic), do not hesitate to fill a new issue.
+
 ## Requirements
 
 ### ipset backend
